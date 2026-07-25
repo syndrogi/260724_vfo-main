@@ -140,3 +140,102 @@
     if (section) observer.observe(section);
   });
 })();
+
+/**
+ * VELFONT OFFICE — First-paint Typewriter
+ * Reveals the nav, hero title/subtitle, and the scroll hint character by
+ * character. Only runs when `.js-typing` is present on <html> (set by an
+ * inline script in <head>, and skipped for prefers-reduced-motion), so
+ * with JS disabled — or motion reduced — the text is simply already there.
+ */
+(function () {
+  if (!document.documentElement.classList.contains("js-typing")) return;
+
+  // Break an element's children into an ordered list of text runs and
+  // <br> markers so multi-line copy (the hero subtitle) types correctly.
+  function captureSegments(el) {
+    var segments = [];
+    Array.prototype.forEach.call(el.childNodes, function (node) {
+      if (node.nodeType === 3 && node.textContent) {
+        segments.push({ type: "text", value: node.textContent });
+      } else if (node.nodeName === "BR") {
+        segments.push({ type: "br" });
+      }
+    });
+    return segments;
+  }
+
+  function typeElement(el, options) {
+    if (!el) {
+      if (options && options.onDone) options.onDone();
+      return;
+    }
+    var speed = (options && options.speed) || 30;
+    var onDone = options && options.onDone;
+    var segments = captureSegments(el);
+
+    el.textContent = "";
+    el.classList.add("is-typing");
+
+    var segIndex = 0;
+    var charIndex = 0;
+
+    function step() {
+      if (segIndex >= segments.length) {
+        el.classList.remove("is-typing");
+        el.classList.add("is-typed");
+        if (onDone) onDone();
+        return;
+      }
+
+      var segment = segments[segIndex];
+
+      if (segment.type === "br") {
+        el.appendChild(document.createElement("br"));
+        segIndex++;
+        charIndex = 0;
+        step();
+        return;
+      }
+
+      if (charIndex === 0) el.appendChild(document.createTextNode(""));
+      var textNode = el.lastChild;
+      textNode.textContent += segment.value.charAt(charIndex);
+      charIndex++;
+
+      if (charIndex >= segment.value.length) {
+        segIndex++;
+        charIndex = 0;
+      }
+
+      setTimeout(step, speed);
+    }
+
+    step();
+  }
+
+  var navLinks = document.querySelectorAll(".main-nav a");
+  var heroTitle = document.querySelector(".hero-title");
+  var heroSubtitle = document.querySelector(".hero-subtitle");
+  var scrollText = document.querySelector(".scroll-text");
+
+  navLinks.forEach(function (link, i) {
+    setTimeout(function () {
+      typeElement(link, { speed: 28 });
+    }, i * 60);
+  });
+
+  setTimeout(function () {
+    typeElement(heroTitle, {
+      speed: 30,
+      onDone: function () {
+        typeElement(heroSubtitle, {
+          speed: 14,
+          onDone: function () {
+            typeElement(scrollText, { speed: 40 });
+          },
+        });
+      },
+    });
+  }, 350);
+})();
