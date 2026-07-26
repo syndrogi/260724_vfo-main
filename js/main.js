@@ -55,7 +55,7 @@
     backdrop.classList.add("is-visible");
     backdrop.hidden = false;
     toggle.setAttribute("aria-expanded", "true");
-    toggle.textContent = "CLOSE";
+    toggle.classList.add("is-open");
     document.body.style.overflow = "hidden";
   }
 
@@ -64,7 +64,7 @@
     drawer.setAttribute("inert", "");
     backdrop.classList.remove("is-visible");
     toggle.setAttribute("aria-expanded", "false");
-    toggle.textContent = "MENU";
+    toggle.classList.remove("is-open");
     document.body.style.overflow = "";
     window.setTimeout(function () {
       if (!drawer.classList.contains("is-open")) backdrop.hidden = true;
