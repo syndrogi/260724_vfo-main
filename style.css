@@ -153,13 +153,12 @@ a {
   letter-spacing: 0.08em;
   color: var(--color-fg);
   border-bottom: 1px solid transparent;
-  transition: color 180ms var(--ease), border-color 180ms var(--ease);
+  transition: color 180ms var(--ease);
 }
 
 .main-nav a:hover,
 .main-nav a:focus-visible {
   color: var(--color-hover);
-  border-bottom-color: var(--color-hover);
 }
 
 .main-nav a:focus-visible {
