@@ -9,6 +9,7 @@
   --color-fg-muted: rgba(0, 0, 0, 0.55);
   --color-fg-faint: rgba(0, 0, 0, 0.38);
   --color-line: #e5e5e5;
+  --color-hover: #e0261f;
 
   --font-sans: "Helvetica Neue", Helvetica, Arial, "Apple SD Gothic Neo", sans-serif;
   /* archivio-uno.com's body font is a self-hosted custom face (Baikal VAR)
@@ -83,11 +84,6 @@ a {
 .logo {
   display: inline-flex;
   align-items: center;
-  transition: opacity 180ms var(--ease);
-}
-
-.logo:hover {
-  opacity: 0.55;
 }
 
 .logo:focus-visible {
@@ -98,7 +94,22 @@ a {
 .logo-mark {
   display: block;
   height: 80px;
-  width: auto;
+  aspect-ratio: 1080 / 725;
+  background-color: var(--color-fg);
+  -webkit-mask-image: url("images/logo.png");
+  mask-image: url("images/logo.png");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  transition: background-color 180ms var(--ease);
+}
+
+.logo:hover .logo-mark,
+.logo:focus-visible .logo-mark {
+  background-color: var(--color-hover);
 }
 
 .header-right {
@@ -117,8 +128,7 @@ a {
 .social-icon {
   display: inline-flex;
   color: var(--color-fg);
-  opacity: 0.7;
-  transition: opacity 180ms var(--ease);
+  transition: color 180ms var(--ease);
 }
 
 .social-icon svg {
@@ -128,7 +138,7 @@ a {
 
 .social-icon:hover,
 .social-icon:focus-visible {
-  opacity: 1;
+  color: var(--color-hover);
 }
 
 .social-icon:focus-visible {
@@ -143,12 +153,13 @@ a {
   letter-spacing: 0.08em;
   color: var(--color-fg);
   border-bottom: 1px solid transparent;
-  transition: border-color 180ms var(--ease);
+  transition: color 180ms var(--ease), border-color 180ms var(--ease);
 }
 
 .main-nav a:hover,
 .main-nav a:focus-visible {
-  border-bottom-color: var(--color-fg);
+  color: var(--color-hover);
+  border-bottom-color: var(--color-hover);
 }
 
 .main-nav a:focus-visible {
@@ -168,15 +179,14 @@ a {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-fg);
-  opacity: 0.5;
   background: none;
   border: none;
   cursor: pointer;
-  transition: opacity 180ms var(--ease);
+  transition: color 180ms var(--ease);
 }
 
 .menu-toggle:hover {
-  opacity: 1;
+  color: var(--color-hover);
 }
 
 .menu-toggle:focus-visible {
@@ -228,12 +238,13 @@ a {
   letter-spacing: 0.12em;
   color: var(--color-fg);
   opacity: 0.5;
-  transition: opacity 180ms var(--ease);
+  transition: opacity 180ms var(--ease), color 180ms var(--ease);
 }
 
 .mobile-nav a:hover,
 .mobile-nav a:focus-visible {
   opacity: 1;
+  color: var(--color-hover);
 }
 
 .mobile-nav a:focus-visible {
