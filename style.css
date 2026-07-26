@@ -346,19 +346,19 @@ a {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: 20px;
   animation: fadeIn 1.2s 0.4s var(--ease) both;
 }
 
 .scroll-arrow {
-  font-size: 12px;
+  font-size: 24px;
   line-height: 1;
   color: var(--color-fg-faint);
   animation: scrollPulse 2.4s ease-in-out infinite;
 }
 
 .scroll-text {
-  font-size: 9.5px;
+  font-size: 19px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--color-fg-faint);
@@ -369,7 +369,7 @@ a {
 }
 
 .scroll-index {
-  font-size: 9.5px;
+  font-size: 19px;
   letter-spacing: 0.1em;
   color: var(--color-fg-faint);
 }
@@ -537,6 +537,6 @@ html.js-typing .scroll-text {
   }
 
   .scroll-text {
-    font-size: 8.5px;
+    font-size: 17px;
   }
 }
