@@ -165,6 +165,46 @@
     return segments;
   }
 
+  // Lets a single letter span be picked up and dragged around with the
+  // pointer. Movement is a plain transform offset — it doesn't affect
+  // layout or its neighboring letters.
+  function makeLetterDraggable(el) {
+    el.style.touchAction = "none";
+    var dragging = false;
+    var startX = 0;
+    var startY = 0;
+    var offsetX = 0;
+    var offsetY = 0;
+    var baseX = 0;
+    var baseY = 0;
+
+    el.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      baseX = offsetX;
+      baseY = offsetY;
+      startX = e.clientX;
+      startY = e.clientY;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("is-dragging");
+    });
+
+    el.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      offsetX = baseX + (e.clientX - startX);
+      offsetY = baseY + (e.clientY - startY);
+      el.style.transform = "translate(" + offsetX + "px, " + offsetY + "px)";
+    });
+
+    function releaseDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("is-dragging");
+    }
+
+    el.addEventListener("pointerup", releaseDrag);
+    el.addEventListener("pointercancel", releaseDrag);
+  }
+
   function typeElement(el, options) {
     if (!el) {
       if (options && options.onDone) options.onDone();
@@ -173,6 +213,7 @@
     var speed = (options && options.speed) || 30;
     var onDone = options && options.onDone;
     var letterSpans = options && options.letterSpans;
+    var draggable = options && options.draggable;
     var segments = captureSegments(el);
 
     el.textContent = "";
@@ -205,6 +246,7 @@
         var letter = document.createElement("span");
         letter.className = "letter";
         letter.textContent = segment.value.charAt(charIndex);
+        if (draggable) makeLetterDraggable(letter);
         el.appendChild(letter);
       } else {
         if (charIndex === 0) el.appendChild(document.createTextNode(""));
@@ -239,10 +281,12 @@
     typeElement(heroTitle, {
       speed: 30,
       letterSpans: true,
+      draggable: true,
       onDone: function () {
         typeElement(heroSubtitle, {
           speed: 14,
           letterSpans: true,
+          draggable: true,
           onDone: function () {
             typeElement(scrollText, { speed: 40 });
           },

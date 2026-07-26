@@ -329,11 +329,22 @@ a {
 
 .hero-title .letter,
 .hero-subtitle .letter {
+  position: relative;
+  display: inline-block;
+  cursor: grab;
+  user-select: none;
   transition: color 150ms var(--ease);
 }
 
 .hero-title .letter:hover,
 .hero-subtitle .letter:hover {
+  color: var(--color-hover);
+}
+
+.hero-title .letter.is-dragging,
+.hero-subtitle .letter.is-dragging {
+  cursor: grabbing;
+  z-index: 10;
   color: var(--color-hover);
 }
 
