@@ -22,6 +22,22 @@
     ".gravity-toggle",
   ].join(", ");
 
+  // Visual properties that only exist because of an ancestor (the big
+  // hero-title font-size, for example) have to be baked in as inline
+  // styles before an element is re-parented to <body> — once it's a
+  // direct child of body it no longer inherits from .hero-title/etc.
+  // `color` is deliberately excluded: baking it in as an inline style
+  // would outrank the `.letter:hover`/`.nav-link:hover` CSS rules and
+  // permanently kill the hover-red effect.
+  var FONT_PROPS = [
+    "fontSize",
+    "fontWeight",
+    "fontFamily",
+    "letterSpacing",
+    "lineHeight",
+    "textTransform",
+  ];
+
   var Engine = Matter.Engine;
   var World = Matter.World;
   var Bodies = Matter.Bodies;
@@ -39,7 +55,54 @@
   // viewport instead of a transformed/animated ancestor's box).
   var originalState = new WeakMap();
 
+  // Lets a settled or falling body be grabbed and dragged by the
+  // pointer, same idea as the letter-drag in main.js but driving the
+  // Matter.js body itself so it keeps colliding/resting correctly and
+  // resumes falling under gravity on release.
+  function attachBodyDrag(item) {
+    var dragging = false;
+    var offsetX = 0;
+    var offsetY = 0;
+
+    // Listen on window (not the element) once a drag starts, rather than
+    // relying on setPointerCapture — the element can rotate/translate
+    // out from under a fast pointer mid-drag, and capture shouldn't be
+    // required just to keep tracking a held-down pointer's movement.
+    function onDown(e) {
+      dragging = true;
+      Body.setStatic(item.body, true);
+      offsetX = e.clientX - item.body.position.x;
+      offsetY = e.clientY - item.body.position.y;
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
+    }
+
+    function onMove(e) {
+      Body.setPosition(item.body, {
+        x: e.clientX - offsetX,
+        y: e.clientY - offsetY,
+      });
+    }
+
+    function onUp() {
+      dragging = false;
+      Body.setStatic(item.body, false);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    }
+
+    item.el.addEventListener("pointerdown", onDown);
+
+    item.detachDrag = function () {
+      item.el.removeEventListener("pointerdown", onDown);
+      if (dragging) onUp();
+    };
+  }
+
   function startGravity() {
+    window.__gravityActive = true;
     engine = Engine.create();
     var world = engine.world;
 
@@ -63,11 +126,23 @@
         var rect = el.getBoundingClientRect();
         var cx = rect.left + rect.width / 2;
         var cy = rect.top + rect.height / 2;
+        var computed = window.getComputedStyle(el);
+        var fontStyles = {};
+        FONT_PROPS.forEach(function (prop) {
+          fontStyles[prop] = computed[prop];
+        });
 
         originalState.set(el, {
           style: el.getAttribute("style") || "",
           parent: el.parentNode,
           nextSibling: el.nextSibling,
+        });
+
+        // Bake in the computed look before moving, so the element keeps
+        // its exact size/weight/color once it's no longer inside
+        // .hero-title, .main-nav, etc.
+        FONT_PROPS.forEach(function (prop) {
+          el.style[prop] = fontStyles[prop];
         });
 
         document.body.appendChild(el);
@@ -78,6 +153,7 @@
         el.style.height = rect.height + "px";
         el.style.margin = "0";
         el.style.zIndex = "500";
+        el.style.touchAction = "none";
 
         var body = Bodies.rectangle(cx, cy, rect.width, rect.height, {
           restitution: 0.45,
@@ -88,7 +164,9 @@
         Body.setVelocity(body, { x: (Math.random() - 0.5) * 2, y: 0 });
         World.add(world, body);
 
-        return { el: el, body: body, cx: cx, cy: cy };
+        var item = { el: el, body: body, cx: cx, cy: cy };
+        attachBodyDrag(item);
+        return item;
       });
 
     runner = Runner.create();
@@ -108,6 +186,7 @@
   }
 
   function stopGravity() {
+    window.__gravityActive = false;
     if (rafId) cancelAnimationFrame(rafId);
     if (runner) Runner.stop(runner);
     if (engine) Engine.clear(engine);
@@ -118,6 +197,8 @@
     // first — items are captured in document order, so reversing that
     // order here rebuilds the original sequence correctly.
     items.slice().reverse().forEach(function (item) {
+      item.detachDrag();
+
       var state = originalState.get(item.el);
       if (!state) return;
 

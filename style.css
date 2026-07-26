@@ -146,7 +146,10 @@ a {
   outline-offset: 6px;
 }
 
-.main-nav a {
+/* .nav-link (not a `.main-nav a` descendant selector) so hover/focus
+   still match after the gravity effect re-parents a link out from
+   under .main-nav. */
+.nav-link {
   display: inline-block;
   padding: 22px 0;
   font-size: clamp(15px, 1.6vw, 19px);
@@ -156,17 +159,17 @@ a {
   transition: color 180ms var(--ease);
 }
 
-.main-nav a:hover,
-.main-nav a:focus-visible {
+.nav-link:hover,
+.nav-link:focus-visible {
   color: var(--color-hover);
 }
 
-.main-nav a:focus-visible {
+.nav-link:focus-visible {
   outline: 1px solid var(--color-fg-muted);
   outline-offset: 6px;
 }
 
-.main-nav a.is-active {
+.nav-link.is-active {
   border-bottom-color: var(--color-fg);
 }
 
@@ -327,8 +330,10 @@ a {
   color: var(--color-fg);
 }
 
-.hero-title .letter,
-.hero-subtitle .letter {
+/* Plain `.letter` (not a `.hero-title`/`.hero-subtitle` descendant
+   selector) so hover/drag styling still matches after the gravity
+   effect re-parents a letter out to <body>. */
+.letter {
   position: relative;
   display: inline-block;
   cursor: grab;
@@ -336,13 +341,11 @@ a {
   transition: color 150ms var(--ease);
 }
 
-.hero-title .letter:hover,
-.hero-subtitle .letter:hover {
+.letter:hover {
   color: var(--color-hover);
 }
 
-.hero-title .letter.is-dragging,
-.hero-subtitle .letter.is-dragging {
+.letter.is-dragging {
   cursor: grabbing;
   z-index: 10;
   color: var(--color-hover);

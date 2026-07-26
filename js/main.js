@@ -165,6 +165,10 @@
     var baseY = 0;
 
     el.addEventListener("pointerdown", function (e) {
+      // While gravity is active, physics owns dragging for every body
+      // (see gravity.js) — this handler would otherwise fight it for
+      // control of the same transform every frame.
+      if (window.__gravityActive) return;
       dragging = true;
       baseX = offsetX;
       baseY = offsetY;
