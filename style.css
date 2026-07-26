@@ -101,11 +101,39 @@ a {
   width: auto;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
 /* Typography matches the Shop header's nav exactly. */
 .main-nav {
   display: flex;
   align-items: center;
   gap: 28px;
+}
+
+.social-icon {
+  display: inline-flex;
+  color: var(--color-fg);
+  opacity: 0.7;
+  transition: opacity 180ms var(--ease);
+}
+
+.social-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.social-icon:hover,
+.social-icon:focus-visible {
+  opacity: 1;
+}
+
+.social-icon:focus-visible {
+  outline: 1px solid var(--color-fg-muted);
+  outline-offset: 6px;
 }
 
 .main-nav a {
