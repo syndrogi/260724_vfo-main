@@ -1,16 +1,26 @@
 /**
  * VELFONT OFFICE — Gravity Toggle
- * Pressing the button pulls every header "button" (logo, nav links, the
- * Instagram icon, the mobile menu toggle, and the gravity button itself)
- * out of normal layout and hands them to Matter.js as falling bodies.
- * Pressing it again snaps everything back to its original CSS position.
+ * Pressing the button pulls every header button, hero letter, and hero
+ * image out of normal layout and hands them to Matter.js as falling
+ * bodies. Pressing it again snaps everything back to its original
+ * place in the document.
+ *
+ * Targets are matched by tag/role inside `header` and `.hero-content`
+ * (any a/button/img there, plus per-letter spans) rather than a fixed
+ * list of classes, so new text or images dropped into those areas
+ * later are picked up automatically.
  */
 (function () {
   var toggleBtn = document.getElementById("gravityToggle");
   if (!toggleBtn || !window.Matter) return;
 
-  var TARGET_SELECTOR =
-    ".logo, .main-nav a, .social-icon, .menu-toggle, .gravity-toggle";
+  var TARGET_SELECTOR = [
+    "header a",
+    "header button",
+    ".hero-content .letter",
+    ".hero-content img",
+    ".gravity-toggle",
+  ].join(", ");
 
   var Engine = Matter.Engine;
   var World = Matter.World;
@@ -23,7 +33,11 @@
   var runner = null;
   var rafId = null;
   var items = [];
-  var originalStyles = new WeakMap();
+  // Every escape hatch needed to put an element back exactly where it
+  // came from: its inline style, parent, and next sibling (re-parenting
+  // to <body> is what lets position:fixed measure from the real
+  // viewport instead of a transformed/animated ancestor's box).
+  var originalState = new WeakMap();
 
   function startGravity() {
     engine = Engine.create();
@@ -50,7 +64,13 @@
         var cx = rect.left + rect.width / 2;
         var cy = rect.top + rect.height / 2;
 
-        originalStyles.set(el, el.getAttribute("style") || "");
+        originalState.set(el, {
+          style: el.getAttribute("style") || "",
+          parent: el.parentNode,
+          nextSibling: el.nextSibling,
+        });
+
+        document.body.appendChild(el);
         el.style.position = "fixed";
         el.style.left = rect.left + "px";
         el.style.top = rect.top + "px";
@@ -92,12 +112,25 @@
     if (runner) Runner.stop(runner);
     if (engine) Engine.clear(engine);
 
-    items.forEach(function (item) {
-      var prevStyle = originalStyles.get(item.el);
-      if (prevStyle) {
-        item.el.setAttribute("style", prevStyle);
+    // Restore back-to-front: each item's recorded nextSibling is only
+    // guaranteed to already be back in state.parent (so insertBefore has
+    // a valid reference node) once everything after it has been undone
+    // first — items are captured in document order, so reversing that
+    // order here rebuilds the original sequence correctly.
+    items.slice().reverse().forEach(function (item) {
+      var state = originalState.get(item.el);
+      if (!state) return;
+
+      if (state.style) {
+        item.el.setAttribute("style", state.style);
       } else {
         item.el.removeAttribute("style");
+      }
+
+      if (state.nextSibling && state.nextSibling.parentNode === state.parent) {
+        state.parent.insertBefore(item.el, state.nextSibling);
+      } else {
+        state.parent.appendChild(item.el);
       }
     });
 
