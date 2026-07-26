@@ -423,6 +423,25 @@ html.js-typing .hero-subtitle {
   50% { opacity: 0; }
 }
 
+/* Cross-site page veil — fades to the page background before handing off
+   to another VELFONT OFFICE site (e.g. the shop), so the hop reads as one
+   continuous transition instead of a hard cut. Hidden by default so a
+   broken/blocked script never leaves the page stuck under it. */
+.page-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--color-bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms var(--ease);
+}
+
+.page-veil.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ==========================================================================
    Placeholder sections — Office / Archive / About
    Editorial shell: divider, label tag, large title, short description,

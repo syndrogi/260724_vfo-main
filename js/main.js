@@ -285,3 +285,37 @@
     });
   }, 350);
 })();
+
+/**
+ * VELFONT OFFICE — Cross-site Page Transition
+ * Fades a white veil in before handing off to the shop site, then
+ * navigates, so the jump between the two static sites feels like one
+ * continuous motion rather than a hard cut.
+ */
+(function () {
+  var veil = document.querySelector(".page-veil");
+  if (!veil) return;
+
+  var reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  var VEIL_MS = reduceMotion ? 0 : 420;
+
+  var links = document.querySelectorAll(
+    'a[href^="https://syndrogi.github.io/260723_vfo-shop/"]'
+  );
+
+  Array.prototype.forEach.call(links, function (link) {
+    link.addEventListener("click", function (e) {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+        return;
+      }
+
+      e.preventDefault();
+      veil.classList.add("is-active");
+      setTimeout(function () {
+        window.location.href = link.href;
+      }, VEIL_MS);
+    });
+  });
+})();
