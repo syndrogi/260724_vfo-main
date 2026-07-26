@@ -11,8 +11,6 @@
   if (!hero) return;
 
   var slides = hero.querySelectorAll(".hero-slide");
-  var currentEl = hero.querySelector(".slide-current");
-  var totalEl = hero.querySelector(".slide-total");
 
   if (!slides.length) return;
 
@@ -22,9 +20,6 @@
   Array.prototype.forEach.call(slides, function (slide, i) {
     slide.classList.toggle("is-active", i === 0);
   });
-
-  if (totalEl) totalEl.textContent = pad(total);
-  updateIndex();
 
   var reduceMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
@@ -38,15 +33,6 @@
     slides[current].classList.remove("is-active");
     current = (current + 1) % total;
     slides[current].classList.add("is-active");
-    updateIndex();
-  }
-
-  function updateIndex() {
-    if (currentEl) currentEl.textContent = pad(current + 1);
-  }
-
-  function pad(n) {
-    return n < 10 ? "0" + n : String(n);
   }
 })();
 
@@ -245,7 +231,11 @@
       if (letterSpans) {
         var letter = document.createElement("span");
         letter.className = "letter";
-        letter.textContent = segment.value.charAt(charIndex);
+        var ch = segment.value.charAt(charIndex);
+        // A lone space inside an inline-block box gets trimmed as
+        // leading/trailing whitespace, so use a non-breaking space to
+        // keep word gaps visible between letter spans.
+        letter.textContent = ch === " " ? " " : ch;
         if (draggable) makeLetterDraggable(letter);
         el.appendChild(letter);
       } else {
@@ -269,7 +259,6 @@
   var navLinks = document.querySelectorAll(".main-nav a");
   var heroTitle = document.querySelector(".hero-title");
   var heroSubtitle = document.querySelector(".hero-subtitle");
-  var scrollText = document.querySelector(".scroll-text");
 
   navLinks.forEach(function (link, i) {
     setTimeout(function () {
@@ -287,9 +276,6 @@
           speed: 14,
           letterSpans: true,
           draggable: true,
-          onDone: function () {
-            typeElement(scrollText, { speed: 40 });
-          },
         });
       },
     });
