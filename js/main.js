@@ -143,11 +143,28 @@
     var segments = [];
     Array.prototype.forEach.call(el.childNodes, function (node) {
       if (node.nodeType === 3 && node.textContent) {
-        segments.push({ type: "text", value: node.textContent });
+        // Collapse HTML source whitespace (line breaks + indentation)
+        // the way a browser normally would — otherwise it gets typed
+        // out as real, non-collapsing letter spans and pushes each
+        // line in from the left.
+        segments.push({ type: "text", value: node.textContent.replace(/\s+/g, " ") });
       } else if (node.nodeName === "BR") {
         segments.push({ type: "br" });
       }
     });
+
+    segments.forEach(function (seg, i) {
+      if (seg.type !== "text") return;
+      var prev = segments[i - 1];
+      var next = segments[i + 1];
+      if (i === 0 || (prev && prev.type === "br")) {
+        seg.value = seg.value.replace(/^ /, "");
+      }
+      if (i === segments.length - 1 || (next && next.type === "br")) {
+        seg.value = seg.value.replace(/ $/, "");
+      }
+    });
+
     return segments;
   }
 
