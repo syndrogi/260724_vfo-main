@@ -1,9 +1,10 @@
 /**
- * VELFONT OFFICE — Gravity Toggle
+ * VELFONT OFFICE — Gravity
  * Pressing the button pulls every header button, hero letter, and hero
- * image out of normal layout and hands them to Matter.js as falling
- * bodies. Pressing it again snaps everything back to its original
- * place in the document.
+ * image out of normal layout — from wherever it currently sits on
+ * screen — and hands it to Matter.js as a falling body. The button
+ * itself disappears on click; this is one-shot, the only way back is
+ * a page reload (refreshing, or navigating home via the logo).
  *
  * Targets are matched by tag/role inside `header` and `.hero-content`
  * (any a/button/img there, plus per-letter spans) rather than a fixed
@@ -19,7 +20,6 @@
     "header button",
     ".hero-content .letter",
     ".hero-content img",
-    ".gravity-toggle",
   ].join(", ");
 
   // Visual properties that only exist because of an ancestor (the big
@@ -44,30 +44,14 @@
   var Body = Matter.Body;
   var Runner = Matter.Runner;
 
-  var active = false;
-  var engine = null;
-  var runner = null;
-  var rafId = null;
-  var items = [];
-  // Every escape hatch needed to put an element back exactly where it
-  // came from: its inline style, parent, and next sibling (re-parenting
-  // to <body> is what lets position:fixed measure from the real
-  // viewport instead of a transformed/animated ancestor's box).
-  var originalState = new WeakMap();
-
-  // Lets a settled or falling body be grabbed and dragged by the
-  // pointer, same idea as the letter-drag in main.js but driving the
-  // Matter.js body itself so it keeps colliding/resting correctly and
-  // resumes falling under gravity on release.
+  // Lets a falling/settled body be grabbed and dragged by the pointer —
+  // dragging moves the actual Matter.js body (pinned static while held)
+  // so it keeps colliding correctly and resumes falling on release.
   function attachBodyDrag(item) {
     var dragging = false;
     var offsetX = 0;
     var offsetY = 0;
 
-    // Listen on window (not the element) once a drag starts, rather than
-    // relying on setPointerCapture — the element can rotate/translate
-    // out from under a fast pointer mid-drag, and capture shouldn't be
-    // required just to keep tracking a held-down pointer's movement.
     function onDown(e) {
       dragging = true;
       Body.setStatic(item.body, true);
@@ -94,16 +78,13 @@
     }
 
     item.el.addEventListener("pointerdown", onDown);
-
-    item.detachDrag = function () {
-      item.el.removeEventListener("pointerdown", onDown);
-      if (dragging) onUp();
-    };
   }
 
   function startGravity() {
     window.__gravityActive = true;
-    engine = Engine.create();
+
+    var engine = Engine.create();
+    engine.gravity.y = 9.8;
     var world = engine.world;
 
     var w = window.innerWidth;
@@ -115,119 +96,84 @@
       Bodies.rectangle(w + 25, h / 2, 50, h * 2, { isStatic: true }),
     ]);
 
-    items = Array.prototype
-      .slice
-      .call(document.querySelectorAll(TARGET_SELECTOR))
-      .filter(function (el) {
-        var rect = el.getBoundingClientRect();
-        return rect.width > 0 && rect.height > 0;
-      })
+    // Measure every target BEFORE mutating any of them. Re-parenting or
+    // resizing one element can reflow the rest (removing a header link
+    // shifts its flex siblings; pulling one letter out of a line of
+    // text collapses the rest of that line) — capturing all rects
+    // first means every element's fall origin matches where it actually
+    // was on screen, not a position skewed by earlier removals.
+    var targets = Array.prototype.slice.call(
+      document.querySelectorAll(TARGET_SELECTOR)
+    );
+
+    var measurements = targets
       .map(function (el) {
         var rect = el.getBoundingClientRect();
-        var cx = rect.left + rect.width / 2;
-        var cy = rect.top + rect.height / 2;
         var computed = window.getComputedStyle(el);
         var fontStyles = {};
         FONT_PROPS.forEach(function (prop) {
           fontStyles[prop] = computed[prop];
         });
-
-        originalState.set(el, {
-          style: el.getAttribute("style") || "",
-          parent: el.parentNode,
-          nextSibling: el.nextSibling,
-        });
-
-        // Bake in the computed look before moving, so the element keeps
-        // its exact size/weight/color once it's no longer inside
-        // .hero-title, .main-nav, etc.
-        FONT_PROPS.forEach(function (prop) {
-          el.style[prop] = fontStyles[prop];
-        });
-
-        document.body.appendChild(el);
-        el.style.position = "fixed";
-        el.style.left = rect.left + "px";
-        el.style.top = rect.top + "px";
-        el.style.width = rect.width + "px";
-        el.style.height = rect.height + "px";
-        el.style.margin = "0";
-        el.style.zIndex = "500";
-        el.style.touchAction = "none";
-
-        var body = Bodies.rectangle(cx, cy, rect.width, rect.height, {
-          restitution: 0.45,
-          friction: 0.4,
-          frictionAir: 0.01,
-        });
-        Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.15);
-        Body.setVelocity(body, { x: (Math.random() - 0.5) * 2, y: 0 });
-        World.add(world, body);
-
-        var item = { el: el, body: body, cx: cx, cy: cy };
-        attachBodyDrag(item);
-        return item;
+        return { el: el, rect: rect, fontStyles: fontStyles };
+      })
+      .filter(function (m) {
+        return m.rect.width > 0 && m.rect.height > 0;
       });
 
-    runner = Runner.create();
+    var items = measurements.map(function (m) {
+      var el = m.el;
+      var rect = m.rect;
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+
+      // Bake in the computed look before moving, so the element keeps
+      // its exact size/weight once it's no longer inside .hero-title,
+      // .main-nav, etc.
+      FONT_PROPS.forEach(function (prop) {
+        el.style[prop] = m.fontStyles[prop];
+      });
+
+      document.body.appendChild(el);
+      el.style.position = "fixed";
+      el.style.left = rect.left + "px";
+      el.style.top = rect.top + "px";
+      el.style.width = rect.width + "px";
+      el.style.height = rect.height + "px";
+      el.style.margin = "0";
+      el.style.zIndex = "500";
+      el.style.touchAction = "none";
+
+      var body = Bodies.rectangle(cx, cy, rect.width, rect.height, {
+        restitution: 0.45,
+        friction: 0.4,
+        frictionAir: 0.01,
+      });
+      Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.15);
+      Body.setVelocity(body, { x: (Math.random() - 0.5) * 2, y: 0 });
+      World.add(world, body);
+
+      var item = { el: el, body: body, cx: cx, cy: cy };
+      attachBodyDrag(item);
+      return item;
+    });
+
+    var runner = Runner.create();
     Runner.run(runner, engine);
-    rafId = requestAnimationFrame(renderLoop);
-  }
 
-  function renderLoop() {
-    items.forEach(function (item) {
-      var pos = item.body.position;
-      var dx = pos.x - item.cx;
-      var dy = pos.y - item.cy;
-      item.el.style.transform =
-        "translate(" + dx + "px, " + dy + "px) rotate(" + item.body.angle + "rad)";
-    });
-    rafId = requestAnimationFrame(renderLoop);
-  }
-
-  function stopGravity() {
-    window.__gravityActive = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    if (runner) Runner.stop(runner);
-    if (engine) Engine.clear(engine);
-
-    // Restore back-to-front: each item's recorded nextSibling is only
-    // guaranteed to already be back in state.parent (so insertBefore has
-    // a valid reference node) once everything after it has been undone
-    // first — items are captured in document order, so reversing that
-    // order here rebuilds the original sequence correctly.
-    items.slice().reverse().forEach(function (item) {
-      item.detachDrag();
-
-      var state = originalState.get(item.el);
-      if (!state) return;
-
-      if (state.style) {
-        item.el.setAttribute("style", state.style);
-      } else {
-        item.el.removeAttribute("style");
-      }
-
-      if (state.nextSibling && state.nextSibling.parentNode === state.parent) {
-        state.parent.insertBefore(item.el, state.nextSibling);
-      } else {
-        state.parent.appendChild(item.el);
-      }
-    });
-
-    items = [];
-    engine = null;
-    runner = null;
+    (function renderLoop() {
+      items.forEach(function (item) {
+        var pos = item.body.position;
+        var dx = pos.x - item.cx;
+        var dy = pos.y - item.cy;
+        item.el.style.transform =
+          "translate(" + dx + "px, " + dy + "px) rotate(" + item.body.angle + "rad)";
+      });
+      requestAnimationFrame(renderLoop);
+    })();
   }
 
   toggleBtn.addEventListener("click", function () {
-    active = !active;
-    toggleBtn.setAttribute("aria-pressed", String(active));
-
-    if (active) {
-      startGravity();
-    } else {
-      stopGravity();
-    }
+    toggleBtn.style.display = "none";
+    startGravity();
   });
 })();

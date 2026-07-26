@@ -371,8 +371,7 @@ a {
   animation: fadeIn 1.2s 0.4s var(--ease) both;
 }
 
-.gravity-toggle:hover,
-.gravity-toggle[aria-pressed="true"] {
+.gravity-toggle:hover {
   color: #fff;
   background-color: var(--color-hover);
   border-color: var(--color-hover);
