@@ -172,6 +172,7 @@
     }
     var speed = (options && options.speed) || 30;
     var onDone = options && options.onDone;
+    var letterSpans = options && options.letterSpans;
     var segments = captureSegments(el);
 
     el.textContent = "";
@@ -198,9 +199,18 @@
         return;
       }
 
-      if (charIndex === 0) el.appendChild(document.createTextNode(""));
-      var textNode = el.lastChild;
-      textNode.textContent += segment.value.charAt(charIndex);
+      // Each letter gets its own span so it can be hovered independently
+      // (see the hero title/subtitle red-on-hover effect).
+      if (letterSpans) {
+        var letter = document.createElement("span");
+        letter.className = "letter";
+        letter.textContent = segment.value.charAt(charIndex);
+        el.appendChild(letter);
+      } else {
+        if (charIndex === 0) el.appendChild(document.createTextNode(""));
+        var textNode = el.lastChild;
+        textNode.textContent += segment.value.charAt(charIndex);
+      }
       charIndex++;
 
       if (charIndex >= segment.value.length) {
@@ -228,9 +238,11 @@
   setTimeout(function () {
     typeElement(heroTitle, {
       speed: 30,
+      letterSpans: true,
       onDone: function () {
         typeElement(heroSubtitle, {
           speed: 14,
+          letterSpans: true,
           onDone: function () {
             typeElement(scrollText, { speed: 40 });
           },

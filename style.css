@@ -327,6 +327,16 @@ a {
   color: var(--color-fg);
 }
 
+.hero-title .letter,
+.hero-subtitle .letter {
+  transition: color 150ms var(--ease);
+}
+
+.hero-title .letter:hover,
+.hero-subtitle .letter:hover {
+  color: var(--color-hover);
+}
+
 /* Scroll indicator — bottom right */
 .hero-scroll {
   position: absolute;
