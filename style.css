@@ -122,8 +122,8 @@ a {
 }
 
 .social-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 80px;
+  height: 80px;
 }
 
 .social-icon:hover,
@@ -505,6 +505,11 @@ html.js-typing .scroll-text {
   }
 
   .logo-mark {
+    height: 56px;
+  }
+
+  .social-icon svg {
+    width: 56px;
     height: 56px;
   }
 
