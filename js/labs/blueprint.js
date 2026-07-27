@@ -1,15 +1,30 @@
 /**
  * VELFONT OFFICE — Labs / Blueprint
- * Placeholder.
+ * Toggles a wireframe reveal: dashed outlines on the page's structural
+ * boxes (header, sections, nav, links, images) plus a small corner
+ * label. Click Blueprint again to turn it off.
  */
 (function () {
   if (typeof registerLab !== "function") return;
+
+  var active = false;
+
+  function enable() {
+    active = true;
+    document.documentElement.classList.add("labs-blueprint");
+  }
+
+  function disable() {
+    active = false;
+    document.documentElement.classList.remove("labs-blueprint");
+  }
 
   registerLab({
     id: "blueprint",
     title: "Blueprint",
     action: function () {
-      if (typeof labsNotice === "function") labsNotice("Coming Soon");
+      if (active) disable();
+      else enable();
     },
   });
 })();

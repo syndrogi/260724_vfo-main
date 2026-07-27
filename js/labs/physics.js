@@ -1,15 +1,96 @@
 /**
  * VELFONT OFFICE — Labs / Physics
- * Placeholder.
+ * An ambient (non-destructive) counterpart to Gravity: header links
+ * and hero letters gently drift away from the pointer and ease back
+ * when it moves off, instead of falling once and staying fallen.
+ * Click Physics again to turn it off and let everything settle back.
  */
 (function () {
   if (typeof registerLab !== "function") return;
+
+  var TARGET_SELECTOR = "header a, header button, .hero-content .letter";
+  var RADIUS = 140;
+  var STRENGTH = 40;
+  var EASE = 0.15;
+  var SETTLE_EPSILON = 0.05;
+
+  var active = false;
+  var rafId = null;
+  var mouseX = -9999;
+  var mouseY = -9999;
+  var items = [];
+
+  function onMove(e) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  }
+
+  function collect() {
+    return Array.prototype.slice
+      .call(document.querySelectorAll(TARGET_SELECTOR))
+      .map(function (el) {
+        var rect = el.getBoundingClientRect();
+        return {
+          el: el,
+          cx: rect.left + rect.width / 2,
+          cy: rect.top + rect.height / 2,
+          ox: 0,
+          oy: 0,
+        };
+      });
+  }
+
+  function loop() {
+    items.forEach(function (item) {
+      var dx = item.cx - mouseX;
+      var dy = item.cy - mouseY;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var targetX = 0;
+      var targetY = 0;
+
+      if (dist < RADIUS) {
+        var force = (1 - dist / RADIUS) * STRENGTH;
+        targetX = (dx / dist) * force;
+        targetY = (dy / dist) * force;
+      }
+
+      item.ox += (targetX - item.ox) * EASE;
+      item.oy += (targetY - item.oy) * EASE;
+
+      if (Math.abs(item.ox) < SETTLE_EPSILON) item.ox = 0;
+      if (Math.abs(item.oy) < SETTLE_EPSILON) item.oy = 0;
+
+      item.el.style.transform =
+        item.ox || item.oy
+          ? "translate(" + item.ox.toFixed(1) + "px, " + item.oy.toFixed(1) + "px)"
+          : "";
+    });
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function enable() {
+    active = true;
+    items = collect();
+    window.addEventListener("mousemove", onMove);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function disable() {
+    active = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    window.removeEventListener("mousemove", onMove);
+    items.forEach(function (item) {
+      item.el.style.transform = "";
+    });
+    items = [];
+  }
 
   registerLab({
     id: "physics",
     title: "Physics",
     action: function () {
-      if (typeof labsNotice === "function") labsNotice("Coming Soon");
+      if (active) disable();
+      else enable();
     },
   });
 })();
