@@ -490,7 +490,11 @@ a {
   pointer-events: none;
 }
 
-/* Blueprint — wireframe reveal */
+/* Blueprint — wireframe reveal. Outlines are on the elements
+   themselves (not just their containers) so they track transforms —
+   an element dragged or nudged by another lab (letter-drag, Physics,
+   Gravity) keeps its own grid box wherever it currently sits, instead
+   of only the original, static container outline being visible. */
 html.labs-blueprint header,
 html.labs-blueprint main,
 html.labs-blueprint .hero-content,
@@ -500,10 +504,17 @@ html.labs-blueprint .main-nav,
 html.labs-blueprint .section-grid,
 html.labs-blueprint .section-label,
 html.labs-blueprint .section-body,
-html.labs-blueprint .header-inner a,
-html.labs-blueprint .header-inner button,
+html.labs-blueprint .logo,
+html.labs-blueprint .nav-link,
+html.labs-blueprint .social-icon,
+html.labs-blueprint .menu-toggle,
 html.labs-blueprint main img {
   outline: 1px dashed rgba(0, 0, 0, 0.35);
+  outline-offset: -1px;
+}
+
+html.labs-blueprint .letter {
+  outline: 1px dashed rgba(0, 0, 0, 0.18);
   outline-offset: -1px;
 }
 
