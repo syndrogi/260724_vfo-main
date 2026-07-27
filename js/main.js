@@ -199,7 +199,7 @@
       if (!dragging) return;
       offsetX = baseX + (e.clientX - startX);
       offsetY = baseY + (e.clientY - startY);
-      el.style.transform = "translate(" + offsetX + "px, " + offsetY + "px)";
+      window.labsTransform.update(el, { tx: offsetX, ty: offsetY });
     });
 
     function releaseDrag(e) {

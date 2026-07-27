@@ -165,8 +165,7 @@
         var pos = item.body.position;
         var dx = pos.x - item.cx;
         var dy = pos.y - item.cy;
-        item.el.style.transform =
-          "translate(" + dx + "px, " + dy + "px) rotate(" + item.body.angle + "rad)";
+        window.labsTransform.update(item.el, { tx: dx, ty: dy, rotate: item.body.angle });
       });
       requestAnimationFrame(renderLoop);
     })();

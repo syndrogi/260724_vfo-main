@@ -1,10 +1,14 @@
 /**
  * VELFONT OFFICE — Labs / Scale
- * Click a header link or hero letter to select it, then scroll to
- * resize it. Scale persists after a piece is resized — toggling Scale
- * off just stops selecting/resizing, it doesn't snap anything back
- * (use Reset for that). Click empty space, or the same element again,
- * to deselect.
+ * Click a header link or hero letter to select it — a Photoshop-style
+ * free-transform box appears with a handle on each corner. Drag a
+ * handle to resize proportionally around the element's center. Click
+ * empty space, or the same element again, to deselect.
+ *
+ * Size persists after deselecting, and after the element is moved by
+ * any other lab (letter-drag, Physics, Gravity) — translate/rotate/
+ * scale are tracked as separate state (see js/transform.js) and always
+ * composed together, so moving something never resets how big it is.
  */
 (function () {
   if (typeof registerLab !== "function") return;
@@ -12,30 +16,66 @@
   var TARGET_SELECTOR = "header a, header button, .hero-content .letter";
   var MIN_SCALE = 0.3;
   var MAX_SCALE = 3;
-  var WHEEL_STEP = 0.0015;
+  var CORNERS = ["nw", "ne", "sw", "se"];
 
   var active = false;
   var selected = null;
-  var scales = new WeakMap();
+  var box = null;
+  var syncRafId = null;
 
-  function currentScale(el) {
-    return scales.get(el) || 1;
+  var dragging = false;
+  var dragCenter = { x: 0, y: 0 };
+  var dragStartDist = 1;
+  var dragStartScale = 1;
+
+  function ensureBox() {
+    if (box) return;
+    box = document.createElement("div");
+    box.className = "labs-scale-box";
+    CORNERS.forEach(function (corner) {
+      var handle = document.createElement("div");
+      handle.className = "labs-scale-handle labs-scale-handle-" + corner;
+      handle.addEventListener("pointerdown", function (e) {
+        onHandleDown(e);
+      });
+      box.appendChild(handle);
+    });
+    document.body.appendChild(box);
   }
 
-  function applyScale(el, value) {
-    var clamped = Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
-    scales.set(el, clamped);
-    el.style.transform = clamped === 1 ? "" : "scale(" + clamped.toFixed(3) + ")";
+  function positionBox() {
+    if (!selected || !box) return;
+    var rect = selected.getBoundingClientRect();
+    box.style.left = rect.left + "px";
+    box.style.top = rect.top + "px";
+    box.style.width = rect.width + "px";
+    box.style.height = rect.height + "px";
+  }
+
+  function syncLoop() {
+    if (!selected) return;
+    positionBox();
+    syncRafId = requestAnimationFrame(syncLoop);
   }
 
   function select(el) {
     if (selected === el) return;
-    if (selected) selected.classList.remove("labs-scale-selected");
     selected = el;
-    if (selected) selected.classList.add("labs-scale-selected");
+
+    if (syncRafId) cancelAnimationFrame(syncRafId);
+
+    if (selected) {
+      ensureBox();
+      box.hidden = false;
+      positionBox();
+      syncRafId = requestAnimationFrame(syncLoop);
+    } else if (box) {
+      box.hidden = true;
+    }
   }
 
   function onClick(e) {
+    if (box && box.contains(e.target)) return;
     var el = e.target.closest(TARGET_SELECTOR);
     if (!el) {
       select(null);
@@ -45,24 +85,47 @@
     select(selected === el ? null : el);
   }
 
-  function onWheel(e) {
+  function onHandleDown(e) {
     if (!selected) return;
     e.preventDefault();
-    applyScale(selected, currentScale(selected) - e.deltaY * WHEEL_STEP);
+    e.stopPropagation();
+    dragging = true;
+
+    var rect = selected.getBoundingClientRect();
+    dragCenter.x = rect.left + rect.width / 2;
+    dragCenter.y = rect.top + rect.height / 2;
+    dragStartDist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
+    dragStartScale = window.labsTransform.get(selected).scale;
+
+    window.addEventListener("pointermove", onHandleMove);
+    window.addEventListener("pointerup", onHandleUp);
+  }
+
+  function onHandleMove(e) {
+    if (!dragging || !selected) return;
+    var dist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
+    var scale = dragStartScale * (dist / dragStartDist);
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+    window.labsTransform.update(selected, { scale: scale });
+    positionBox();
+  }
+
+  function onHandleUp() {
+    dragging = false;
+    window.removeEventListener("pointermove", onHandleMove);
+    window.removeEventListener("pointerup", onHandleUp);
   }
 
   function enable() {
     active = true;
     document.body.classList.add("labs-scale-active");
     document.addEventListener("click", onClick);
-    document.addEventListener("wheel", onWheel, { passive: false });
   }
 
   function disable() {
     active = false;
     document.body.classList.remove("labs-scale-active");
     document.removeEventListener("click", onClick);
-    document.removeEventListener("wheel", onWheel, { passive: false });
     select(null);
   }
 

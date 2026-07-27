@@ -60,10 +60,7 @@
       if (Math.abs(item.ox) < SETTLE_EPSILON) item.ox = 0;
       if (Math.abs(item.oy) < SETTLE_EPSILON) item.oy = 0;
 
-      item.el.style.transform =
-        item.ox || item.oy
-          ? "translate(" + item.ox.toFixed(1) + "px, " + item.oy.toFixed(1) + "px)"
-          : "";
+      window.labsTransform.update(item.el, { tx: item.ox, ty: item.oy });
     });
     rafId = requestAnimationFrame(loop);
   }
@@ -80,7 +77,7 @@
     if (rafId) cancelAnimationFrame(rafId);
     window.removeEventListener("mousemove", onMove);
     items.forEach(function (item) {
-      item.el.style.transform = "";
+      window.labsTransform.update(item.el, { tx: 0, ty: 0 });
     });
     items = [];
   }

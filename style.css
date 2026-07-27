@@ -577,15 +577,51 @@ html.labs-blueprint body::after {
   );
 }
 
-/* Scale — click to select, scroll to resize */
+/* Scale — click to select, drag a corner handle to resize
+   (Photoshop-style free transform). */
 .labs-scale-active {
-  cursor: zoom-in;
+  cursor: pointer;
 }
 
-.labs-scale-selected {
-  outline: 2px dashed var(--color-fg);
-  outline-offset: 2px;
-  cursor: ns-resize;
+.labs-scale-box {
+  position: fixed;
+  z-index: 592;
+  outline: 1px dashed var(--color-fg);
+  pointer-events: none;
+}
+
+.labs-scale-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--color-fg);
+  border: 1px solid var(--color-bg);
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+.labs-scale-handle-nw {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+
+.labs-scale-handle-ne {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+
+.labs-scale-handle-sw {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+
+.labs-scale-handle-se {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
 }
 
 /* Measure — ruler cursor */
