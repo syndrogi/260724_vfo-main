@@ -1,10 +1,11 @@
 /**
- * VELFONT OFFICE — Gravity
- * Pressing the button pulls every header button, hero letter, and hero
- * image out of normal layout — from wherever it currently sits on
- * screen — and hands it to Matter.js as a falling body. The button
- * itself disappears on click; this is one-shot, the only way back is
- * a page reload (refreshing, or navigating home via the logo).
+ * VELFONT OFFICE — Labs / Gravity
+ * Pulls every header button, hero letter, and hero image out of normal
+ * layout — from wherever it currently sits on screen — and hands it to
+ * Matter.js as a falling body. One-shot: once an element has fallen it
+ * moves out of header/.hero-content, so nothing is left to grab on a
+ * second run. Behavior is unchanged from the original standalone
+ * Gravity button; only how it's triggered has moved.
  *
  * Targets are matched by tag/role inside `header` and `.hero-content`
  * (any a/button/img there, plus per-letter spans) rather than a fixed
@@ -12,8 +13,7 @@
  * later are picked up automatically.
  */
 (function () {
-  var toggleBtn = document.getElementById("gravityToggle");
-  if (!toggleBtn || !window.Matter) return;
+  if (typeof registerLab !== "function" || !window.Matter) return;
 
   var TARGET_SELECTOR = [
     "header a",
@@ -172,8 +172,9 @@
     })();
   }
 
-  toggleBtn.addEventListener("click", function () {
-    toggleBtn.style.display = "none";
-    startGravity();
+  registerLab({
+    id: "gravity",
+    title: "Gravity",
+    action: startGravity,
   });
 })();

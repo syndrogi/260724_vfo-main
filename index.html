@@ -7,6 +7,9 @@
 <meta name="description" content="VELFONT OFFICE — A continuously evolving office for fashion, archive, connection, research and experiment.">
 <link rel="stylesheet" href="style.css">
 <link rel="icon" type="image/png" href="images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
   if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     document.documentElement.classList.add("js-typing");
@@ -84,12 +87,17 @@
       </p>
     </div>
 
-    <button
-      type="button"
-      class="gravity-toggle"
-      id="gravityToggle"
-      aria-label="Gravity"
-    >G</button>
+    <div class="labs" id="labs">
+      <button
+        type="button"
+        class="labs-toggle"
+        id="labsToggle"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-controls="labsMenu"
+      >Labs</button>
+      <ul class="labs-menu" id="labsMenu" aria-hidden="true"></ul>
+    </div>
   </section>
 
   <section class="section-placeholder" id="office">
@@ -136,6 +144,13 @@
 
 <script src="js/main.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js" defer></script>
-<script src="js/gravity.js" defer></script>
+<script src="js/labs.js" defer></script>
+<script src="js/labs/gravity.js" defer></script>
+<script src="js/labs/blueprint.js" defer></script>
+<script src="js/labs/noise.js" defer></script>
+<script src="js/labs/archive.js" defer></script>
+<script src="js/labs/measure.js" defer></script>
+<script src="js/labs/physics.js" defer></script>
+<script src="js/labs/developer.js" defer></script>
 </body>
 </html>

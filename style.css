@@ -371,28 +371,123 @@ a {
   color: var(--color-hover);
 }
 
-/* Gravity toggle — bottom right */
-/* Styled like a physics-textbook variable (italic serif math face,
-   e.g. the "G" in Newton's law of gravitation) rather than a UI button. */
-.gravity-toggle {
+/* Labs — a hidden experimental playground, bottom right. Deliberately
+   quiet: small type, no box, no color — meant to be found, not sold. */
+.labs {
   position: absolute;
   right: var(--edge);
   bottom: 40px;
-  z-index: 3;
-  font-family: "Cambria Math", "STIX Two Math", Cambria, Georgia, "Times New Roman", serif;
-  font-style: italic;
-  font-size: 28px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 18px;
+  animation: fadeIn 1.2s 0.4s var(--ease) both;
+}
+
+.labs-toggle {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--color-fg);
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   transition: color 180ms var(--ease);
-  animation: fadeIn 1.2s 0.4s var(--ease) both;
 }
 
-.gravity-toggle:hover {
+.labs-toggle:hover,
+.labs.is-open .labs-toggle {
   color: var(--color-hover);
+}
+
+.labs-menu {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 14px;
+  list-style: none;
+  pointer-events: none;
+}
+
+.labs.is-open .labs-menu {
+  pointer-events: auto;
+}
+
+.labs-menu-item {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 200ms var(--ease), transform 200ms var(--ease);
+}
+
+.labs-menu.is-visible .labs-menu-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.labs-menu-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-fg);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 180ms var(--ease);
+}
+
+.labs-menu-btn:hover {
+  color: var(--color-hover);
+}
+
+.labs-menu-icon {
+  margin-right: 8px;
+}
+
+/* Minimal feedback text for placeholder labs ("Coming Soon") — no box,
+   no color, just a quiet reply in the same spot as the trigger. */
+.labs-notice {
+  position: fixed;
+  right: var(--edge);
+  bottom: 40px;
+  z-index: 20;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-fg-muted);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 220ms var(--ease), transform 220ms var(--ease);
+  pointer-events: none;
+}
+
+.labs-notice.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Developer overlay — plain bordered box, IBM Plex Mono, no chrome. */
+.labs-dev-overlay {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 600;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--color-fg);
+  background: var(--color-bg);
+  border: 1px solid var(--color-fg);
+  padding: 10px 12px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -567,7 +662,11 @@ html.js-typing .hero-subtitle {
     max-width: calc(100% - 56px);
   }
 
-  .gravity-toggle {
+  .labs {
+    bottom: 24px;
+  }
+
+  .labs-notice {
     bottom: 24px;
   }
 }
