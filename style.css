@@ -577,17 +577,15 @@ html.labs-blueprint body::after {
   );
 }
 
-/* Archive — grayscale + vignette */
-html.labs-archive {
-  filter: grayscale(1) contrast(1.05);
+/* Scale — click to select, scroll to resize */
+.labs-scale-active {
+  cursor: zoom-in;
 }
 
-.labs-archive-vignette {
-  position: fixed;
-  inset: 0;
-  z-index: 540;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.18) 100%);
+.labs-scale-selected {
+  outline: 2px dashed var(--color-fg);
+  outline-offset: 2px;
+  cursor: ns-resize;
 }
 
 /* Measure — ruler cursor */
