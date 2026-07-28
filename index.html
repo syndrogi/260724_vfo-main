@@ -27,7 +27,7 @@
     <div class="header-right">
       <nav class="main-nav" aria-label="Primary">
         <a href="https://syndrogi.github.io/260723_vfo-shop/" class="nav-link">shop</a>
-        <a href="#contact" class="nav-link">contact</a>
+        <a href="#" class="nav-link js-contact-toggle" id="contactToggle" aria-haspopup="true" aria-expanded="false" aria-controls="contactPanel">contact</a>
         <a href="https://syndrogi.github.io/260724_vfo-founder-os/" class="nav-link">members only</a>
       </nav>
 
@@ -63,7 +63,7 @@
   <a href="#office">office</a>
   <a href="#archive">archive</a>
   <a href="#about">about</a>
-  <a href="#contact">contact</a>
+  <a href="#" class="js-contact-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="contactPanel">contact</a>
   <a href="https://syndrogi.github.io/260724_vfo-founder-os/">members only</a>
 </nav>
 
@@ -99,6 +99,40 @@
         aria-controls="labsMenu"
       >labs</button>
       <ul class="labs-menu" id="labsMenu" aria-hidden="true"></ul>
+    </div>
+
+    <div class="contact-panel" id="contactPanel" aria-hidden="true">
+      <button type="button" class="contact-close" id="contactClose" aria-label="Close contact form">&times;</button>
+      <h2 class="contact-title">Contact</h2>
+      <form class="contact-form" id="contactForm" novalidate>
+        <label class="contact-field">
+          <span>Name</span>
+          <input type="text" name="name" autocomplete="name">
+        </label>
+        <label class="contact-field">
+          <span>Email <em>required</em></span>
+          <input type="email" name="email" required autocomplete="email">
+        </label>
+        <label class="contact-field">
+          <span>Reason for Inquiry</span>
+          <select name="reason">
+            <option>General</option>
+            <option>Collaboration</option>
+            <option>Press</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label class="contact-field">
+          <span>Phone</span>
+          <input type="tel" name="phone" autocomplete="tel">
+        </label>
+        <label class="contact-field">
+          <span>Comment</span>
+          <textarea name="comment" rows="4"></textarea>
+        </label>
+        <button type="submit" class="contact-submit">Send</button>
+        <p class="contact-status" id="contactStatus" aria-live="polite"></p>
+      </form>
     </div>
   </section>
 
@@ -140,25 +174,13 @@
       </div>
     </div>
   </section>
-
-  <section class="section-placeholder" id="contact">
-    <div class="section-grid">
-      <div class="section-label">
-        <img src="images/logo.png" alt="" class="section-tag">
-        <span>Contact</span>
-      </div>
-      <div class="section-body">
-        <h2 class="section-title">Contact</h2>
-        <p class="section-desc">Get in touch — a way to reach VELFONT OFFICE is coming soon.</p>
-      </div>
-    </div>
-  </section>
 </main>
 
 <div class="page-veil" aria-hidden="true"></div>
 
 <script src="js/transform.js" defer></script>
 <script src="js/main.js" defer></script>
+<script src="js/contact.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js" defer></script>
 <script src="js/labs.js" defer></script>
 <script src="js/labs/reset.js" defer></script>
