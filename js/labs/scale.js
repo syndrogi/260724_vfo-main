@@ -180,7 +180,7 @@
 
   registerLab({
     id: "scale",
-    title: "Scale",
+    title: "scale",
     action: function () {
       if (active) disable();
       else enable();

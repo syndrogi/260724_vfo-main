@@ -84,7 +84,7 @@
 
   registerLab({
     id: "physics",
-    title: "Physics",
+    title: "physics",
     action: function () {
       if (active) disable();
       else enable();

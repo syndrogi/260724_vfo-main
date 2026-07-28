@@ -387,10 +387,9 @@ a {
 
 .labs-toggle {
   font-family: inherit;
-  font-size: 10px;
+  font-size: clamp(15px, 1.6vw, 19px);
   font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--color-fg);
   background: none;
   border: none;
@@ -430,10 +429,9 @@ a {
 
 .labs-menu-btn {
   font-family: inherit;
-  font-size: 12px;
+  font-size: clamp(15px, 1.6vw, 19px);
   font-weight: 700;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--color-fg);
   background: none;
   border: none;

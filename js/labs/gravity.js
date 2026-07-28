@@ -173,7 +173,7 @@
 
   registerLab({
     id: "gravity",
-    title: "Gravity",
+    title: "gravity",
     action: startGravity,
   });
 })();

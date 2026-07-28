@@ -72,7 +72,7 @@
 
   registerLab({
     id: "developer",
-    title: "Developer",
+    title: "developer",
     action: function () {
       if (active) disable();
       else enable();

@@ -59,7 +59,7 @@
 
   registerLab({
     id: "measure",
-    title: "Measure",
+    title: "measure",
     action: function () {
       if (active) disable();
       else enable();

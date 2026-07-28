@@ -10,7 +10,7 @@
 
   registerLab({
     id: "reset",
-    title: "Reset",
+    title: "reset",
     action: function () {
       window.location.reload();
     },

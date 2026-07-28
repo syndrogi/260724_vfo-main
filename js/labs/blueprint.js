@@ -21,7 +21,7 @@
 
   registerLab({
     id: "blueprint",
-    title: "Blueprint",
+    title: "blueprint",
     action: function () {
       if (active) disable();
       else enable();

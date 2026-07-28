@@ -129,7 +129,7 @@
 
   registerLab({
     id: "noise",
-    title: "Noise",
+    title: "noise",
     action: function () {
       if (active) disable();
       else enable();
