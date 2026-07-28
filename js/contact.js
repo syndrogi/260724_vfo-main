@@ -4,11 +4,21 @@
  * section — click "contact" (header or mobile menu) to toggle it.
  * Closes on: the toggle again, the × button, outside click, Escape.
  *
- * The form doesn't submit anywhere yet (no backend wired up) — it
- * just confirms receipt in place. Storing submissions is planned
- * separately.
+ * Submissions go straight to Supabase (contact_submissions table).
+ * The anon key below is meant to be public — it can only INSERT under
+ * Row Level Security, it can't read anything back. See contact_table.sql
+ * for the table + policy this depends on.
  */
 (function () {
+  var SUPABASE_URL = "https://miqfpvtmmvuvaezexazw.supabase.co";
+  var SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcWZwdnRtbXZ1dmFlemV4YXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMTYwNTEsImV4cCI6MjEwMDc5MjA1MX0.JeN31q4ahSoqjFVAZS3Is1nMOc_mkiLB4nv3yxP2aY0";
+
+  var supabaseClient =
+    window.supabase && window.supabase.createClient
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
   var panel = document.getElementById("contactPanel");
   var closeBtn = document.getElementById("contactClose");
   var form = document.getElementById("contactForm");
@@ -61,10 +71,41 @@
   });
 
   if (form) {
+    var submitBtn = form.querySelector(".contact-submit");
+
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      form.reset();
-      if (status) status.textContent = "Thanks — we'll be in touch.";
+
+      if (!supabaseClient) {
+        if (status) status.textContent = "Something went wrong — try again later.";
+        return;
+      }
+
+      var data = new FormData(form);
+      var payload = {
+        name: data.get("name") || null,
+        email: data.get("email"),
+        phone: data.get("phone") || null,
+        reason: data.get("reason"),
+        comment: data.get("comment") || null,
+      };
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (status) status.textContent = "Sending…";
+
+      supabaseClient
+        .from("contact_submissions")
+        .insert([payload])
+        .then(function (result) {
+          if (submitBtn) submitBtn.disabled = false;
+          if (result.error) {
+            console.error(result.error);
+            if (status) status.textContent = "Something went wrong — try again later.";
+            return;
+          }
+          form.reset();
+          if (status) status.textContent = "Thanks — we'll be in touch.";
+        });
     });
   }
 })();

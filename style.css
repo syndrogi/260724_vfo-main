@@ -565,6 +565,11 @@ a {
   transition: color 180ms var(--ease), background-color 180ms var(--ease);
 }
 
+.contact-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .contact-submit:hover {
   color: var(--color-bg);
   background: var(--color-hover);
