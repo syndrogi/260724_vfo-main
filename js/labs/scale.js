@@ -1,9 +1,11 @@
 /**
  * VELFONT OFFICE — Labs / Scale
  * Click a header link or hero letter to select it — a Photoshop-style
- * free-transform box appears with a handle on each corner. Drag a
- * handle to resize proportionally around the element's center. Click
- * empty space, or the same element again, to deselect.
+ * free-transform box appears with a handle on each corner and each
+ * edge. Corner handles resize proportionally around the element's
+ * center; edge handles stretch a single axis (top/bottom = height
+ * only, left/right = width only). Click empty space, or the same
+ * element again, to deselect.
  *
  * Size persists after deselecting, and after the element is moved by
  * any other lab (letter-drag, Physics, Gravity) — translate/rotate/
@@ -16,7 +18,18 @@
   var TARGET_SELECTOR = "header a, header button, .hero-content .letter";
   var MIN_SCALE = 0.3;
   var MAX_SCALE = 3;
-  var CORNERS = ["nw", "ne", "sw", "se"];
+
+  // axis: "both" (corner, uniform), "x" (left/right edge), "y" (top/bottom edge)
+  var HANDLES = [
+    { id: "nw", axis: "both" },
+    { id: "ne", axis: "both" },
+    { id: "sw", axis: "both" },
+    { id: "se", axis: "both" },
+    { id: "n", axis: "y" },
+    { id: "s", axis: "y" },
+    { id: "e", axis: "x" },
+    { id: "w", axis: "x" },
+  ];
 
   var active = false;
   var selected = null;
@@ -24,21 +37,24 @@
   var syncRafId = null;
 
   var dragging = false;
+  var suppressNextClick = false;
+  var dragAxis = "both";
   var dragCenter = { x: 0, y: 0 };
   var dragStartDist = 1;
-  var dragStartScale = 1;
+  var dragStartScaleX = 1;
+  var dragStartScaleY = 1;
 
   function ensureBox() {
     if (box) return;
     box = document.createElement("div");
     box.className = "labs-scale-box";
-    CORNERS.forEach(function (corner) {
-      var handle = document.createElement("div");
-      handle.className = "labs-scale-handle labs-scale-handle-" + corner;
-      handle.addEventListener("pointerdown", function (e) {
-        onHandleDown(e);
+    HANDLES.forEach(function (handle) {
+      var el = document.createElement("div");
+      el.className = "labs-scale-handle labs-scale-handle-" + handle.id;
+      el.addEventListener("pointerdown", function (e) {
+        onHandleDown(e, handle.axis);
       });
-      box.appendChild(handle);
+      box.appendChild(el);
     });
     document.body.appendChild(box);
   }
@@ -75,6 +91,15 @@
   }
 
   function onClick(e) {
+    // A drag still ends with mousedown+mouseup on (roughly) the same
+    // spot, which fires a synthetic "click" — without this guard, that
+    // click reaches here right after a handle drag and, if the pointer
+    // no longer resolves to something inside the box, deselects
+    // whatever was just resized.
+    if (suppressNextClick) {
+      suppressNextClick = false;
+      return;
+    }
     if (box && box.contains(e.target)) return;
     var el = e.target.closest(TARGET_SELECTOR);
     if (!el) {
@@ -85,33 +110,57 @@
     select(selected === el ? null : el);
   }
 
-  function onHandleDown(e) {
+  function onHandleDown(e, axis) {
     if (!selected) return;
     e.preventDefault();
     e.stopPropagation();
     dragging = true;
+    dragAxis = axis;
 
     var rect = selected.getBoundingClientRect();
     dragCenter.x = rect.left + rect.width / 2;
     dragCenter.y = rect.top + rect.height / 2;
     dragStartDist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
-    dragStartScale = window.labsTransform.get(selected).scale;
+
+    var s = window.labsTransform.get(selected);
+    dragStartScaleX = s.scaleX;
+    dragStartScaleY = s.scaleY;
 
     window.addEventListener("pointermove", onHandleMove);
     window.addEventListener("pointerup", onHandleUp);
   }
 
+  function clampScale(value) {
+    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+  }
+
   function onHandleMove(e) {
     if (!dragging || !selected) return;
-    var dist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
-    var scale = dragStartScale * (dist / dragStartDist);
-    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
-    window.labsTransform.update(selected, { scale: scale });
+    var partial = {};
+
+    if (dragAxis === "both") {
+      var dist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
+      var ratio = dist / dragStartDist;
+      partial.scaleX = clampScale(dragStartScaleX * ratio);
+      partial.scaleY = clampScale(dragStartScaleY * ratio);
+    } else if (dragAxis === "x") {
+      // dragStartDist was captured from an e/w handle, which starts
+      // exactly on the vertical center line — so it's already a pure
+      // horizontal distance, no separate x-only start value needed.
+      var distX = Math.max(1, Math.abs(e.clientX - dragCenter.x));
+      partial.scaleX = clampScale(dragStartScaleX * (distX / dragStartDist));
+    } else if (dragAxis === "y") {
+      var distY = Math.max(1, Math.abs(e.clientY - dragCenter.y));
+      partial.scaleY = clampScale(dragStartScaleY * (distY / dragStartDist));
+    }
+
+    window.labsTransform.update(selected, partial);
     positionBox();
   }
 
   function onHandleUp() {
     dragging = false;
+    suppressNextClick = true;
     window.removeEventListener("pointermove", onHandleMove);
     window.removeEventListener("pointerup", onHandleUp);
   }
