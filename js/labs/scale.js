@@ -101,8 +101,14 @@
     var font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
     var ink = getGlyphInk(text, font);
 
-    var width = ink.width > 0 && ink.width <= rect.width * 1.2 ? ink.width : rect.width;
-    var height = ink.height > 0 && ink.height <= rect.height ? ink.height : rect.height;
+    // ink.width/height come from the element's un-transformed font-size
+    // (canvas measureText doesn't know about the scale() we've applied),
+    // so they have to be scaled up/down to match however big the element
+    // currently is — otherwise the box stops tracking the glyph the
+    // moment it's resized and just sits at its original size.
+    var s = window.labsTransform.get(el);
+    var width = ink.width > 0 ? ink.width * s.scaleX : rect.width;
+    var height = ink.height > 0 ? ink.height * s.scaleY : rect.height;
 
     return {
       left: rect.left + (rect.width - width) / 2,
