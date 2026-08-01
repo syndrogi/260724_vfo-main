@@ -2,10 +2,12 @@
  * VELFONT OFFICE — Labs / Scale
  * Click a header link or hero letter to select it — a Photoshop-style
  * free-transform box appears with a handle on each corner and each
- * edge. Corner handles resize proportionally around the element's
- * center; edge handles stretch a single axis (top/bottom = height
- * only, left/right = width only). Click empty space, or the same
- * element again, to deselect.
+ * edge. Dragging a handle grows/shrinks the element from the OPPOSITE
+ * side (drag the right edge out and only the right side moves, the
+ * left edge stays put) — corners scale both axes proportionally from
+ * their opposite corner, edges stretch a single axis from their
+ * opposite edge. Click empty space, or the same element again, to
+ * deselect.
  *
  * Size persists after deselecting, and after the element is moved by
  * any other lab (letter-drag, Physics, Gravity) — translate/rotate/
@@ -16,20 +18,21 @@
   if (typeof registerLab !== "function") return;
 
   var TARGET_SELECTOR = "header a, header button, .hero-content .letter";
-  var MIN_SCALE = 0.3;
-  var MAX_SCALE = 3;
+  var MIN_SCALE = 0.05;
 
-  // axis: "both" (corner, uniform), "x" (left/right edge), "y" (top/bottom edge)
-  var HANDLES = [
-    { id: "nw", axis: "both" },
-    { id: "ne", axis: "both" },
-    { id: "sw", axis: "both" },
-    { id: "se", axis: "both" },
-    { id: "n", axis: "y" },
-    { id: "s", axis: "y" },
-    { id: "e", axis: "x" },
-    { id: "w", axis: "x" },
-  ];
+  // fx/fy: this handle's position as a fraction of the box (0 = left/top,
+  // 1 = right/bottom). The drag anchors at the OPPOSITE fraction, so the
+  // dragged side moves and the opposite side holds still.
+  var HANDLE_INFO = {
+    nw: { fx: 0, fy: 0, axis: "both" },
+    ne: { fx: 1, fy: 0, axis: "both" },
+    sw: { fx: 0, fy: 1, axis: "both" },
+    se: { fx: 1, fy: 1, axis: "both" },
+    n: { fx: 0.5, fy: 0, axis: "y" },
+    s: { fx: 0.5, fy: 1, axis: "y" },
+    e: { fx: 1, fy: 0.5, axis: "x" },
+    w: { fx: 0, fy: 0.5, axis: "x" },
+  };
 
   var active = false;
   var selected = null;
@@ -39,7 +42,7 @@
   var dragging = false;
   var suppressNextClick = false;
   var dragAxis = "both";
-  var dragCenter = { x: 0, y: 0 };
+  var dragAnchor = { x: 0, y: 0 };
   var dragStartDist = 1;
   var dragStartScaleX = 1;
   var dragStartScaleY = 1;
@@ -48,11 +51,11 @@
     if (box) return;
     box = document.createElement("div");
     box.className = "labs-scale-box";
-    HANDLES.forEach(function (handle) {
+    Object.keys(HANDLE_INFO).forEach(function (id) {
       var el = document.createElement("div");
-      el.className = "labs-scale-handle labs-scale-handle-" + handle.id;
+      el.className = "labs-scale-handle labs-scale-handle-" + id;
       el.addEventListener("pointerdown", function (e) {
-        onHandleDown(e, handle.axis);
+        onHandleDown(e, id);
       });
       box.appendChild(el);
     });
@@ -110,17 +113,30 @@
     select(selected === el ? null : el);
   }
 
-  function onHandleDown(e, axis) {
+  function onHandleDown(e, handleId) {
     if (!selected) return;
     e.preventDefault();
     e.stopPropagation();
     dragging = true;
-    dragAxis = axis;
 
+    var info = HANDLE_INFO[handleId];
+    dragAxis = info.axis;
+
+    // Anchor at the opposite side from the handle being dragged, and
+    // pivot scaling from that same point, so it's the dragged side that
+    // visibly moves.
     var rect = selected.getBoundingClientRect();
-    dragCenter.x = rect.left + rect.width / 2;
-    dragCenter.y = rect.top + rect.height / 2;
-    dragStartDist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
+    dragAnchor.x = rect.left + (1 - info.fx) * rect.width;
+    dragAnchor.y = rect.top + (1 - info.fy) * rect.height;
+    selected.style.transformOrigin = (1 - info.fx) * 100 + "% " + (1 - info.fy) * 100 + "%";
+
+    if (dragAxis === "both") {
+      dragStartDist = Math.max(1, Math.hypot(e.clientX - dragAnchor.x, e.clientY - dragAnchor.y));
+    } else if (dragAxis === "x") {
+      dragStartDist = Math.max(1, Math.abs(e.clientX - dragAnchor.x));
+    } else {
+      dragStartDist = Math.max(1, Math.abs(e.clientY - dragAnchor.y));
+    }
 
     var s = window.labsTransform.get(selected);
     dragStartScaleX = s.scaleX;
@@ -131,7 +147,7 @@
   }
 
   function clampScale(value) {
-    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, value));
+    return Math.max(MIN_SCALE, value);
   }
 
   function onHandleMove(e) {
@@ -139,18 +155,15 @@
     var partial = {};
 
     if (dragAxis === "both") {
-      var dist = Math.max(1, Math.hypot(e.clientX - dragCenter.x, e.clientY - dragCenter.y));
+      var dist = Math.max(1, Math.hypot(e.clientX - dragAnchor.x, e.clientY - dragAnchor.y));
       var ratio = dist / dragStartDist;
       partial.scaleX = clampScale(dragStartScaleX * ratio);
       partial.scaleY = clampScale(dragStartScaleY * ratio);
     } else if (dragAxis === "x") {
-      // dragStartDist was captured from an e/w handle, which starts
-      // exactly on the vertical center line — so it's already a pure
-      // horizontal distance, no separate x-only start value needed.
-      var distX = Math.max(1, Math.abs(e.clientX - dragCenter.x));
+      var distX = Math.max(1, Math.abs(e.clientX - dragAnchor.x));
       partial.scaleX = clampScale(dragStartScaleX * (distX / dragStartDist));
     } else if (dragAxis === "y") {
-      var distY = Math.max(1, Math.abs(e.clientY - dragCenter.y));
+      var distY = Math.max(1, Math.abs(e.clientY - dragAnchor.y));
       partial.scaleY = clampScale(dragStartScaleY * (distY / dragStartDist));
     }
 
