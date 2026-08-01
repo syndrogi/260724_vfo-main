@@ -67,8 +67,21 @@ a {
   width: 100%;
   height: var(--header-height);
   z-index: 100;
-  background: var(--color-bg);
+  background: transparent;
+  /* The bar itself doesn't intercept clicks/hover — only its actual
+     controls do (re-enabled below) — so anything scaled/dragged up
+     underneath it (see Labs/Scale) stays hoverable and clickable
+     instead of the header's empty space blocking it. pointer-events
+     is inherited, so this alone covers every descendant. */
+  pointer-events: none;
   animation: fadeIn 1s var(--ease) both;
+}
+
+.logo,
+.nav-link,
+.social-icon,
+.menu-toggle {
+  pointer-events: auto;
 }
 
 /* Logo left, nav right. Side padding uses --edge so the logo's left
