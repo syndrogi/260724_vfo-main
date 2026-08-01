@@ -42,10 +42,34 @@
   var dragging = false;
   var suppressNextClick = false;
   var dragAxis = "both";
-  var dragAnchor = { x: 0, y: 0 };
   var dragStartDist = 1;
   var dragStartScaleX = 1;
   var dragStartScaleY = 1;
+  // The element's own un-transformed (scale 1, translate 0) box, derived
+  // once per drag from its current rendered rect + current transform
+  // state. Combined with the anchor's fixed LOCAL position, this lets us
+  // solve for whatever translate keeps the anchor visually still at any
+  // scale, without ever touching transform-origin mid-drag (see note on
+  // FIXED_ORIGIN below for why).
+  var dragLayout = { left: 0, top: 0, width: 0, height: 0 };
+  var dragAnchorLocal = { x: 0, y: 0 };
+  var dragAnchorScreen = { x: 0, y: 0 };
+
+  // transform-origin is set ONCE per element and never changed again.
+  // Switching it mid-sequence (e.g. "right edge" after a previous "left
+  // edge" resize) makes the browser re-pivot the *existing* scale around
+  // the new origin, which snaps the element to a different position the
+  // instant the origin changes — that was the cause of the "jump when
+  // resizing from the opposite side" bug. Keeping origin fixed and doing
+  // the "which side stays put" math ourselves (via translate) sidesteps
+  // that entirely.
+  var FIXED_ORIGIN = "0px 0px";
+
+  function ensureFixedOrigin(el) {
+    if (el.style.transformOrigin !== FIXED_ORIGIN) {
+      el.style.transformOrigin = FIXED_ORIGIN;
+    }
+  }
 
   function ensureBox() {
     if (box) return;
@@ -140,6 +164,7 @@
     if (syncRafId) cancelAnimationFrame(syncRafId);
 
     if (selected) {
+      ensureFixedOrigin(selected);
       ensureBox();
       box.hidden = false;
       positionBox();
@@ -178,25 +203,38 @@
     var info = HANDLE_INFO[handleId];
     dragAxis = info.axis;
 
-    // Anchor at the opposite side from the handle being dragged, and
-    // pivot scaling from that same point, so it's the dragged side that
-    // visibly moves.
-    var rect = selected.getBoundingClientRect();
-    dragAnchor.x = rect.left + (1 - info.fx) * rect.width;
-    dragAnchor.y = rect.top + (1 - info.fy) * rect.height;
-    selected.style.transformOrigin = (1 - info.fx) * 100 + "% " + (1 - info.fy) * 100 + "%";
-
-    if (dragAxis === "both") {
-      dragStartDist = Math.max(1, Math.hypot(e.clientX - dragAnchor.x, e.clientY - dragAnchor.y));
-    } else if (dragAxis === "x") {
-      dragStartDist = Math.max(1, Math.abs(e.clientX - dragAnchor.x));
-    } else {
-      dragStartDist = Math.max(1, Math.abs(e.clientY - dragAnchor.y));
-    }
-
     var s = window.labsTransform.get(selected);
     dragStartScaleX = s.scaleX;
     dragStartScaleY = s.scaleY;
+
+    // Derive the element's un-transformed box (scale 1, translate 0) from
+    // its current rendered rect + current transform, so this works
+    // correctly no matter how many times it's already been resized.
+    var rect = selected.getBoundingClientRect();
+    dragLayout.width = rect.width / s.scaleX;
+    dragLayout.height = rect.height / s.scaleY;
+    dragLayout.left = rect.left - s.tx;
+    dragLayout.top = rect.top - s.ty;
+
+    // The anchor (opposite side from the handle) as a fixed point in that
+    // local box, and where it currently sits on screen — both stay
+    // constant for the rest of this drag; only the scale changes, and we
+    // solve for whatever translate keeps dragAnchorScreen fixed.
+    dragAnchorLocal.x = (1 - info.fx) * dragLayout.width;
+    dragAnchorLocal.y = (1 - info.fy) * dragLayout.height;
+    dragAnchorScreen.x = rect.left + (1 - info.fx) * rect.width;
+    dragAnchorScreen.y = rect.top + (1 - info.fy) * rect.height;
+
+    if (dragAxis === "both") {
+      dragStartDist = Math.max(
+        1,
+        Math.hypot(e.clientX - dragAnchorScreen.x, e.clientY - dragAnchorScreen.y)
+      );
+    } else if (dragAxis === "x") {
+      dragStartDist = Math.max(1, Math.abs(e.clientX - dragAnchorScreen.x));
+    } else {
+      dragStartDist = Math.max(1, Math.abs(e.clientY - dragAnchorScreen.y));
+    }
 
     window.addEventListener("pointermove", onHandleMove);
     window.addEventListener("pointerup", onHandleUp);
@@ -211,16 +249,30 @@
     var partial = {};
 
     if (dragAxis === "both") {
-      var dist = Math.max(1, Math.hypot(e.clientX - dragAnchor.x, e.clientY - dragAnchor.y));
+      var dist = Math.max(
+        1,
+        Math.hypot(e.clientX - dragAnchorScreen.x, e.clientY - dragAnchorScreen.y)
+      );
       var ratio = dist / dragStartDist;
       partial.scaleX = clampScale(dragStartScaleX * ratio);
       partial.scaleY = clampScale(dragStartScaleY * ratio);
     } else if (dragAxis === "x") {
-      var distX = Math.max(1, Math.abs(e.clientX - dragAnchor.x));
+      var distX = Math.max(1, Math.abs(e.clientX - dragAnchorScreen.x));
       partial.scaleX = clampScale(dragStartScaleX * (distX / dragStartDist));
     } else if (dragAxis === "y") {
-      var distY = Math.max(1, Math.abs(e.clientY - dragAnchor.y));
+      var distY = Math.max(1, Math.abs(e.clientY - dragAnchorScreen.y));
       partial.scaleY = clampScale(dragStartScaleY * (distY / dragStartDist));
+    }
+
+    // Solve for the translate that keeps the anchor point pinned at
+    // dragAnchorScreen given the new scale — transform-origin never
+    // moves (it's fixed at 0,0), so this is the only thing that has to
+    // change to make it look like scaling is happening from the anchor.
+    if (partial.scaleX !== undefined) {
+      partial.tx = dragAnchorScreen.x - dragLayout.left - dragAnchorLocal.x * partial.scaleX;
+    }
+    if (partial.scaleY !== undefined) {
+      partial.ty = dragAnchorScreen.y - dragLayout.top - dragAnchorLocal.y * partial.scaleY;
     }
 
     window.labsTransform.update(selected, partial);
