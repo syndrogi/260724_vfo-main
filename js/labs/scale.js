@@ -54,6 +54,12 @@
   var dragLayout = { left: 0, top: 0, width: 0, height: 0 };
   var dragAnchorLocal = { x: 0, y: 0 };
   var dragAnchorScreen = { x: 0, y: 0 };
+  // Unit vector pointing from the anchor toward where the drag started.
+  // Distance is measured as a *signed* projection onto this vector, so
+  // dragging past the anchor (to the other side of where you started)
+  // goes negative instead of just bottoming out — a negative scale()
+  // is a mirror flip, so the letter flips over right as you cross it.
+  var dragDir = { x: 1, y: 0 };
 
   // transform-origin is set ONCE per element and never changed again.
   // Switching it mid-sequence (e.g. "right edge" after a previous "left
@@ -130,9 +136,12 @@
     // so they have to be scaled up/down to match however big the element
     // currently is — otherwise the box stops tracking the glyph the
     // moment it's resized and just sits at its original size.
+    // A flipped element (negative scale) still has a plain positive-width
+    // rendered rect — getBoundingClientRect() is always axis-aligned and
+    // non-negative — so the ink size has to be un-signed the same way.
     var s = window.labsTransform.get(el);
-    var width = ink.width > 0 ? ink.width * s.scaleX : rect.width;
-    var height = ink.height > 0 ? ink.height * s.scaleY : rect.height;
+    var width = ink.width > 0 ? ink.width * Math.abs(s.scaleX) : rect.width;
+    var height = ink.height > 0 ? ink.height * Math.abs(s.scaleY) : rect.height;
 
     return {
       left: rect.left + (rect.width - width) / 2,
@@ -225,43 +234,45 @@
     dragAnchorScreen.x = rect.left + (1 - info.fx) * rect.width;
     dragAnchorScreen.y = rect.top + (1 - info.fy) * rect.height;
 
-    if (dragAxis === "both") {
-      dragStartDist = Math.max(
-        1,
-        Math.hypot(e.clientX - dragAnchorScreen.x, e.clientY - dragAnchorScreen.y)
-      );
-    } else if (dragAxis === "x") {
-      dragStartDist = Math.max(1, Math.abs(e.clientX - dragAnchorScreen.x));
-    } else {
-      dragStartDist = Math.max(1, Math.abs(e.clientY - dragAnchorScreen.y));
-    }
+    var startVecX = e.clientX - dragAnchorScreen.x;
+    var startVecY = dragAxis === "x" ? 0 : e.clientY - dragAnchorScreen.y;
+    if (dragAxis === "y") startVecX = 0;
+    dragStartDist = Math.max(1, Math.hypot(startVecX, startVecY));
+    dragDir.x = startVecX / dragStartDist;
+    dragDir.y = startVecY / dragStartDist;
 
     window.addEventListener("pointermove", onHandleMove);
     window.addEventListener("pointerup", onHandleUp);
   }
 
+  // Keeps the sign of `value` but never lets its magnitude collapse to
+  // (or through) zero — MIN_SCALE stays the floor on both the growing
+  // and the flipped side.
   function clampScale(value) {
-    return Math.max(MIN_SCALE, value);
+    var magnitude = Math.max(MIN_SCALE, Math.abs(value));
+    return value < 0 ? -magnitude : magnitude;
   }
 
   function onHandleMove(e) {
     if (!dragging || !selected) return;
     var partial = {};
 
+    // Signed projection of the current pointer offset onto the initial
+    // drag direction: positive while still moving the way the drag
+    // started, negative once the pointer has crossed to the other side
+    // of the anchor.
+    var curVecX = e.clientX - dragAnchorScreen.x;
+    var curVecY = e.clientY - dragAnchorScreen.y;
+    var signedDist = curVecX * dragDir.x + curVecY * dragDir.y;
+    var ratio = signedDist / dragStartDist;
+
     if (dragAxis === "both") {
-      var dist = Math.max(
-        1,
-        Math.hypot(e.clientX - dragAnchorScreen.x, e.clientY - dragAnchorScreen.y)
-      );
-      var ratio = dist / dragStartDist;
       partial.scaleX = clampScale(dragStartScaleX * ratio);
       partial.scaleY = clampScale(dragStartScaleY * ratio);
     } else if (dragAxis === "x") {
-      var distX = Math.max(1, Math.abs(e.clientX - dragAnchorScreen.x));
-      partial.scaleX = clampScale(dragStartScaleX * (distX / dragStartDist));
+      partial.scaleX = clampScale(dragStartScaleX * ratio);
     } else if (dragAxis === "y") {
-      var distY = Math.max(1, Math.abs(e.clientY - dragAnchorScreen.y));
-      partial.scaleY = clampScale(dragStartScaleY * (distY / dragStartDist));
+      partial.scaleY = clampScale(dragStartScaleY * ratio);
     }
 
     // Solve for the translate that keeps the anchor point pinned at
