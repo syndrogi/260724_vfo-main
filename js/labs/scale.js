@@ -300,8 +300,21 @@
     dragAnchorScreen.x = originalBox.left + dragAnchorLocal.x * s.scaleX + s.tx;
     dragAnchorScreen.y = originalBox.top + dragAnchorLocal.y * s.scaleY + s.ty;
 
+    // Growing something almost always means dragging a handle outward,
+    // toward — and often past — the edge of the browser window. Without
+    // capture, a pointerup that happens outside the window never reaches
+    // us: `dragging` stays stuck true, and every mouse move afterwards
+    // (even with no button held) keeps getting read as a continuation of
+    // this drag against the now-stale anchor, which is what put the
+    // selection box wherever the pointer happened to wander next. Capture
+    // guarantees this handle keeps getting move/up regardless of where
+    // the cursor physically is, same as the letter-drag handler already
+    // does in main.js.
+    e.target.setPointerCapture(e.pointerId);
+
     window.addEventListener("pointermove", onHandleMove);
     window.addEventListener("pointerup", onHandleUp);
+    window.addEventListener("pointercancel", onHandleUp);
   }
 
   // Keeps the sign of `value` but never lets its magnitude collapse to
@@ -359,6 +372,7 @@
     suppressNextClick = true;
     window.removeEventListener("pointermove", onHandleMove);
     window.removeEventListener("pointerup", onHandleUp);
+    window.removeEventListener("pointercancel", onHandleUp);
   }
 
   function enable() {
