@@ -20,6 +20,14 @@
   var state = new WeakMap();
   var RAD_TO_DEG = 180 / Math.PI;
 
+  // Scale locks its selected element for the duration of the selection —
+  // Physics's proximity push and Gravity's fall both write tx/ty/rotate
+  // on their own per-frame loop, with no idea Scale is mid-drag on the
+  // same element; without this, the two loops fight over the same state
+  // every frame and a Scale drag can silently lose to whichever wrote
+  // last. Physics/Gravity check this before touching a locked element.
+  var locked = new WeakSet();
+
   function getState(el) {
     var s = state.get(el);
     if (!s) {
@@ -52,6 +60,15 @@
     },
     get: function (el) {
       return getState(el);
+    },
+    lock: function (el) {
+      locked.add(el);
+    },
+    unlock: function (el) {
+      locked.delete(el);
+    },
+    isLocked: function (el) {
+      return locked.has(el);
     },
   };
 })();

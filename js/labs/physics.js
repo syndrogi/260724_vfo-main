@@ -42,6 +42,19 @@
 
   function loop() {
     items.forEach(function (item) {
+      // Scale locks an element for the duration of its selection — ceding
+      // control here (and keeping ox/oy synced to the locked-out state,
+      // not the last value Physics itself wrote) means a drag isn't
+      // fighting Physics for the same tx/ty every frame, and Physics
+      // resumes easing from the right place the moment it's unlocked
+      // instead of snapping back to a stale position.
+      if (window.labsTransform.isLocked(item.el)) {
+        var locked = window.labsTransform.get(item.el);
+        item.ox = locked.tx;
+        item.oy = locked.ty;
+        return;
+      }
+
       var dx = item.cx - mouseX;
       var dy = item.cy - mouseY;
       var dist = Math.sqrt(dx * dx + dy * dy) || 1;

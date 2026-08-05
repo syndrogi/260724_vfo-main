@@ -242,12 +242,14 @@
 
   function select(el) {
     if (selected === el) return;
+    if (selected) window.labsTransform.unlock(selected);
     selected = el;
     lastBoxRect = null;
 
     if (syncRafId) cancelAnimationFrame(syncRafId);
 
     if (selected) {
+      window.labsTransform.lock(selected);
       ensureFixedOrigin(selected);
       captureSelectionMetrics(selected);
       ensureBox();

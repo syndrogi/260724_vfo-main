@@ -102,9 +102,15 @@
     // text collapses the rest of that line) — capturing all rects
     // first means every element's fall origin matches where it actually
     // was on screen, not a position skewed by earlier removals.
-    var targets = Array.prototype.slice.call(
-      document.querySelectorAll(TARGET_SELECTOR)
-    );
+    // Skip anything Scale currently has selected — Scale's box math has
+    // no idea an element it's tracking got yanked out of layout and
+    // handed to Matter.js mid-selection, and Gravity's per-frame rotate
+    // isn't something Scale's axis-aligned box accounts for either.
+    var targets = Array.prototype.slice
+      .call(document.querySelectorAll(TARGET_SELECTOR))
+      .filter(function (el) {
+        return !window.labsTransform.isLocked(el);
+      });
 
     var measurements = targets
       .map(function (el) {
