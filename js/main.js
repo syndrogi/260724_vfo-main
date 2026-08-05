@@ -304,10 +304,12 @@
 })();
 
 /**
- * VELFONT OFFICE — Cross-site Page Transition
- * Fades a white veil in before handing off to the shop site, then
- * navigates, so the jump between the two static sites feels like one
- * continuous motion rather than a hard cut.
+ * VELFONT OFFICE — Cross-section Page Transition
+ * Fades a white veil in before handing off to /shop/, then navigates, so
+ * the jump between the main site and the shop section feels like one
+ * continuous motion rather than a hard cut — still a full page load
+ * (separate static HTML, not a shared SPA route) even though both now
+ * live under the same domain.
  */
 (function () {
   var veil = document.querySelector(".page-veil");
@@ -318,9 +320,7 @@
   ).matches;
   var VEIL_MS = reduceMotion ? 0 : 420;
 
-  var links = document.querySelectorAll(
-    'a[href^="https://syndrogi.github.io/260723_vfo-shop/"]'
-  );
+  var links = document.querySelectorAll('a[href^="/shop/"]');
 
   Array.prototype.forEach.call(links, function (link) {
     link.addEventListener("click", function (e) {

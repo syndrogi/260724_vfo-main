@@ -1,0 +1,183 @@
+You are continuing development of the existing Founder OS project.
+
+This is NOT a redesign.
+This is the next stage of the current application.
+
+Current authentication flow:
+
+RGB Member Selection
+→ Password Input
+→ WELCOME
+→ Member Name
+
+Keep everything that currently exists exactly as it is.
+
+Do not redesign any existing UI, typography, spacing, timing, colors, animations, or authentication logic.
+
+──────────────────────────────
+
+Implement the following flow:
+
+After the correct password is entered:
+
+1. Display
+
+WELCOME
+
+Hyungrok Son
+
+for approximately 1 second.
+
+2. Fade the entire screen smoothly to black over 300–500ms.
+
+3. Transition seamlessly into the Founder OS Desktop.
+
+The Founder Desktop should completely replace the authentication interface.
+
+The login screen should no longer be visible after the transition.
+
+Do NOT reload the page.
+
+Do NOT navigate to another HTML page.
+
+Implement the desktop as the next application state inside the existing application.
+
+The transition should feel like an operating system boot sequence.
+
+There should never be a white flash or browser-like page transition.
+
+──────────────────────────────
+
+Founder Desktop Design
+
+Design philosophy:
+
+Minimal
+
+Internal operating system
+
+Editorial
+
+Terminal-inspired
+
+No resemblance to macOS
+
+No resemblance to Windows
+
+No glassmorphism
+
+No gradients
+
+No rounded colorful UI
+
+Background:
+Pure Black (#000)
+
+Typography:
+IBM Plex Mono
+
+Everything should feel precise, calm, and intentionally minimal.
+
+──────────────────────────────
+
+Desktop Layout
+
+Top bar:
+
+FOUNDER OS
+
+Current Time
+
+Member Name
+
+Main area:
+
+PROJECTS
+
+NOTES
+
+ARCHIVE
+
+FILES
+
+TERMINAL
+
+SETTINGS
+
+LOG OUT
+
+Display them as clean monochrome modules.
+
+Use subtle hover feedback only.
+
+Keyboard navigation should be easy to implement later.
+
+──────────────────────────────
+
+Constraints
+
+Do NOT modify:
+
+authentication
+
+member selection
+
+password logic
+
+existing animations
+
+existing typography
+
+existing spacing
+
+existing transitions
+
+Only implement everything that happens AFTER the welcome screen.
+
+Do not remove existing code unless absolutely necessary.
+
+Preserve the current architecture.
+
+Write clean, modular, maintainable code.
+
+Avoid unnecessary libraries.
+
+Prefer Vanilla HTML, CSS and JavaScript.
+
+──────────────────────────────
+
+Success Criteria
+
+Correct password
+
+↓
+
+WELCOME
+
+↓
+
+Hyungrok Son
+
+↓
+
+1 second pause
+
+↓
+
+Smooth fade to black
+
+↓
+
+Founder OS Desktop appears seamlessly
+
+↓
+
+No page reload
+
+↓
+
+No browser navigation
+
+↓
+
+Feels like booting into a real operating system.

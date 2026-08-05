@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<script>
+  // Runs synchronously, before anything renders — blocks the OS from ever
+  // being painted for a visitor who hasn't authenticated at /index.html.
+  if (!sessionStorage.getItem("founderSession")) {
+    window.location.replace("../index.html");
+  }
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VELFONT OS — Desktop</title>
+<link rel="stylesheet" href="css/desktop.css">
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
+<link rel="manifest" href="/site.webmanifest">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="js/manifest.js" defer></script>
+<script src="components/hub.js" defer></script>
+<script src="components/topbar.js" defer></script>
+<script src="js/boot.js" defer></script>
+</head>
+<body>
+  <div id="desktop" class="desktop">
+    <header class="desktop-topbar">
+      <span class="topbar-brand">
+        <a class="topbar-logo" href="/" aria-label="VELFONT"></a>
+        FOUNDER OS
+      </span>
+      <span class="topbar-clock">
+        <span class="topbar-tz">
+          <span class="tz-label">KR</span>
+          <span class="topbar-date" id="topbar-date-kr"></span>
+          <span class="topbar-time" id="topbar-time-kr"></span>
+        </span>
+        <span class="topbar-tz">
+          <span class="tz-label">NY</span>
+          <span class="topbar-date" id="topbar-date-ny"></span>
+          <span class="topbar-time" id="topbar-time-ny"></span>
+        </span>
+      </span>
+      <div class="topbar-member-wrap">
+        <button type="button" class="topbar-member" id="member-trigger">
+          <span class="member-badge" id="member-badge"></span>
+          <span id="topbar-member-name"></span>
+        </button>
+        <div class="logout-menu" id="logout-menu">
+          <button type="button" class="logout-btn" id="logout-btn">LOG OUT</button>
+        </div>
+      </div>
+    </header>
+    <main class="desktop-main">
+      <div class="app-hub" id="app-hub"></div>
+
+      <div class="app-workspace" id="app-workspace" hidden>
+        <button type="button" class="app-back" id="app-back">← BACK TO DESKTOP</button>
+        <div id="app-mount"></div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
