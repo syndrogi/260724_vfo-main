@@ -8,9 +8,17 @@
  * tracks translate/rotate/scaleX/scaleY as separate per-element state
  * and always composes all of them into one transform, so any one of
  * them can be updated without disturbing the others.
+ *
+ * Composed via DOMMatrix rather than a hand-built string — same
+ * translate/rotate/scale order as before (rotate takes degrees, so the
+ * stored radians get converted), but going through a real matrix gives
+ * more accurate/consistent results than string-templating and leaves
+ * room to compose additional operations later without re-deriving the
+ * math by hand.
  */
 (function () {
   var state = new WeakMap();
+  var RAD_TO_DEG = 180 / Math.PI;
 
   function getState(el) {
     var s = state.get(el);
@@ -23,10 +31,11 @@
 
   function compose(el) {
     var s = getState(el);
-    el.style.transform =
-      "translate(" + s.tx + "px, " + s.ty + "px) " +
-      "rotate(" + s.rotate + "rad) " +
-      "scale(" + s.scaleX + ", " + s.scaleY + ")";
+    var matrix = new DOMMatrix()
+      .translate(s.tx, s.ty)
+      .rotate(s.rotate * RAD_TO_DEG)
+      .scale(s.scaleX, s.scaleY);
+    el.style.transform = matrix.toString();
   }
 
   window.labsTransform = {
