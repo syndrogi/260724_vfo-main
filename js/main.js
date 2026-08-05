@@ -230,6 +230,16 @@
     var charIndex = 0;
 
     function step() {
+      // Set by lang.js when a user-triggered language switch overwrites
+      // this element mid-animation — without this, a still-pending step()
+      // scheduled against the segments captured from the pre-switch text
+      // would keep appending/mutating on top of the freshly-translated
+      // content a moment later, corrupting it.
+      if (el.dataset.i18nLocked) {
+        el.classList.remove("is-typing");
+        return;
+      }
+
       if (segIndex >= segments.length) {
         el.classList.remove("is-typing");
         el.classList.add("is-typed");
