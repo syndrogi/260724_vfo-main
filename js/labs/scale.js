@@ -157,11 +157,22 @@
 
     var text = el.textContent;
     if (text && text.trim()) {
+      // Canvas measures ink size from the element's computed font-size,
+      // which CSS transform never touches — ink.width/height is already
+      // a scale-1 baseline, the same as originalBox above, and needs no
+      // un-scaling. Dividing by the current sx/sy here was a bug: on a
+      // first-ever selection sx/sy is always 1 so it was a no-op and
+      // looked fine, but re-selecting an element that's already scaled
+      // (sx/sy != 1 at capture time) baked a spurious inverse-scale
+      // factor into inkSize — one that only cancels out in getTightRect()
+      // if the scale never changes again, and otherwise renders a tiny
+      // box sized for the *original* glyph, floating in the middle of
+      // the actually-resized one.
       var cs = getComputedStyle(el);
       var font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
       var ink = getGlyphInk(text, font);
-      inkSize.width = ink.width / Math.abs(sx);
-      inkSize.height = ink.height / Math.abs(sy);
+      inkSize.width = ink.width;
+      inkSize.height = ink.height;
     } else {
       inkSize.width = 0;
       inkSize.height = 0;
