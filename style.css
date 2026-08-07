@@ -840,7 +840,21 @@ html.labs-blueprint body::after {
   background: var(--color-fg);
   border: 1px solid var(--color-bg);
   pointer-events: auto;
+  /* Without this, a touch-drag starting on a handle gets read as a page
+     scroll/pan gesture instead of reaching our pointermove handler —
+     the drag either does nothing or gets cut short by a pointercancel
+     the moment the browser decides it's a scroll. */
+  touch-action: none;
   transform: translate(-50%, -50%);
+}
+
+/* Invisible touch target extending past the 8px visual dot — a real
+   finger is far wider than a mouse cursor, and 8px alone is well under
+   any comfortable tap-target size. Keeps the visible handle unchanged. */
+.labs-scale-handle::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
 }
 
 .labs-scale-handle-nw {
