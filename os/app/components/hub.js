@@ -6,7 +6,10 @@
  * app/modules on demand — nothing is preloaded, and nothing is fetched
  * twice (each module's HTML is cached after first load).
  *
- * Switching modules never reloads app/index.html or touches the URL.
+ * The hub grid stays on screen the whole time — opening a module reveals
+ * its workspace underneath the grid rather than replacing it, and the
+ * opened tile is marked .active. "Close" just collapses the workspace
+ * again. Switching modules never reloads app/index.html or touches the URL.
  */
 (function () {
   const hub = document.getElementById("app-hub");
@@ -21,6 +24,19 @@
   modules.forEach(function (module) {
     modulesById[module.id] = module;
   });
+
+  const tilesById = {};
+  let activeId = null;
+
+  function setActiveTile(id) {
+    if (activeId && tilesById[activeId]) {
+      tilesById[activeId].classList.remove("active");
+    }
+    activeId = id;
+    if (id && tilesById[id]) {
+      tilesById[id].classList.add("active");
+    }
+  }
 
   const cache = {};
 
@@ -167,8 +183,8 @@
     const module = modulesById[id];
     if (!module || !module.file) return;
 
-    hub.hidden = true;
     workspace.hidden = false;
+    setActiveTile(id);
 
     if (cache[id]) {
       renderModule(id, cache[id]);
@@ -191,7 +207,7 @@
 
   function showHub() {
     workspace.hidden = true;
-    hub.hidden = false;
+    setActiveTile(null);
   }
 
   // Small brand badges for external-service tiles (bottom-right corner of
@@ -251,6 +267,7 @@
     tile.addEventListener("click", function () {
       openModule(module.id);
     });
+    tilesById[module.id] = tile;
     hub.appendChild(tile);
   });
 

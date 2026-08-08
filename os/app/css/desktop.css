@@ -225,6 +225,10 @@ body {
   filter: brightness(1.6);
 }
 
+.app-tile.active {
+  border-color: #fff;
+}
+
 /* Workspace — an open application */
 
 .app-workspace {
