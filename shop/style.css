@@ -60,6 +60,24 @@ svg {
   height: var(--header-height);
   background: #fff;
   border-bottom: 1px solid #111;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+/* Set by setupHeaderScroll() in js/common.js once the page has scrolled
+   past the header's own height — at that point .site-header is pinned
+   (position: sticky) like a fixed header, so dropping its background
+   here lets whatever has scrolled up underneath show through, leaving
+   only the logo/nav text visible. The drop-shadow keeps that text/mark
+   readable over photo content instead of a flat text-shadow, since the
+   logo is a mask-image, not text. */
+.site-header.is-scrolled {
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+.site-header.is-scrolled .header-side,
+.site-header.is-scrolled .logo {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
 }
 
 .header-side {
@@ -775,27 +793,17 @@ svg {
 }
 
 /* ---------- Collection Feed ----------
-   An editorial masonry: cards keep their photo's natural aspect ratio
-   (no forced crop) and the grid gives each one a row-span computed from
-   its rendered height (js/shop.js's applyMasonrySpan/layoutMasonry) —
-   the standard vanilla-CSS-Grid masonry technique. Generous gaps and
-   page padding are the whitespace the redesign asked for; there's
-   deliberately no border/divider between cards. */
+   A fixed, uniform-crop grid — every card shares the same 3:4 portrait
+   frame instead of a masonry layout, with a tight gap so the tiles read
+   as one continuous sheet. No card background/border; the crop and the
+   caption underneath are the only visual weight. */
 .collection-feed {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  grid-auto-rows: 8px;
-  gap: 40px 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 24px;
   padding: 0 56px 160px;
 }
 
-/* Block, not flex: the card is a CSS Grid item whose own box gets
-   stretched to whatever tiny row-span js/shop.js gave it — a flex
-   column would then actively shrink its children to fit that box
-   before we ever get to measure their real size. Plain block layout
-   lets .collection-card-media/.collection-card-info keep their natural
-   content height regardless of the parent's grid-imposed height, which
-   is exactly what applyMasonrySpan() needs to read. */
 .collection-card {
   display: block;
 }
@@ -805,35 +813,30 @@ svg {
   grid-column: span 2;
 }
 
+/* Matches the site's standardized product photo size (1426×1957px) so
+   every card crops identically regardless of the source image's own
+   dimensions. */
 .collection-card-media {
   position: relative;
   overflow: hidden;
+  aspect-ratio: 1426 / 1957;
   background: #f7f7f7;
 }
 
 /* Every product renders at least one .stage-image (its thumbnail).
    Additional stage images (product_images rows: detail/fabric/
    construction/campaign) layer on top and crossfade on hover — see
-   setupHoverCycle() in js/shop.js. The first keeps the box's natural
-   height; the rest sit absolutely over it so the crossfade never
-   shifts layout. */
+   setupHoverCycle() in js/shop.js. All of them fill the fixed-ratio
+   frame above identically, so there's no first-child special case. */
 .stage-image {
   display: block;
-  width: 100%;
-  height: auto;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-.stage-image:first-child {
-  position: relative;
-}
-
-.stage-image:not(:first-child) {
   position: absolute;
   inset: 0;
+  width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.6s ease;
 }
 
 .stage-image.is-active {
@@ -854,18 +857,21 @@ svg {
 }
 
 .collection-card-info {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .collection-card-name {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   line-height: 1.4;
 }
 
 .collection-card-info .price {
   margin-top: 4px;
-  font-size: 15px;
+  font-size: 12px;
+  color: #666;
 }
 
 .sold-out-label {
@@ -1331,16 +1337,8 @@ svg {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .product-card:nth-child(3n) {
-    border-right: 1px solid #111;
-  }
-
-  .product-card:nth-child(2n) {
-    border-right: none;
+  .collection-feed {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .site-footer {
@@ -1463,12 +1461,9 @@ svg {
     padding: 28px 16px 16px;
   }
 
-  .product-grid {
+  .collection-feed {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .product-card:nth-child(2n) {
-    border-right: none;
+    padding: 0 16px 96px;
   }
 
   .site-footer {

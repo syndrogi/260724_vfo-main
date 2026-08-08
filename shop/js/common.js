@@ -327,6 +327,32 @@ function setupLoginModal() {
   });
 }
 
+// Header stays solid white at the very top of the page; past a small
+// scroll threshold it drops its background (see .site-header.is-scrolled
+// in style.css) so the logo/nav text keep floating over the page while
+// the header itself turns transparent. rAF-throttled since scroll fires
+// continuously.
+function setupHeaderScroll() {
+  const header = document.querySelector(".site-header");
+  if (!header) return;
+
+  const SCROLL_THRESHOLD = 24;
+  let ticking = false;
+
+  function update() {
+    header.classList.toggle("is-scrolled", window.scrollY > SCROLL_THRESHOLD);
+    ticking = false;
+  }
+
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  });
+
+  update();
+}
+
 function revealPageVeil() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -341,6 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupNewsletter();
   renderAccountButton();
   setupLoginModal();
+  setupHeaderScroll();
   revealPageVeil();
 });
 

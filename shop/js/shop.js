@@ -1,6 +1,4 @@
 const ARCHIVE_STORAGE_BUCKET = "archive";
-const MASONRY_ROW_HEIGHT = 8; // px — must match .collection-feed's grid-auto-rows
-const MASONRY_ROW_GAP = 40; // px — must match .collection-feed's row gap
 const HOVER_CYCLE_MS = 900;
 const ARCHIVE_BLOCK_INTERVAL = 5; // an archive block after every 5th product, while blocks last
 
@@ -81,26 +79,6 @@ function archiveBlockHtml(block) {
   `;
 }
 
-// Measures the card's own content children rather than the card element
-// itself: the card is a grid item that CSS Grid stretches to whatever
-// tiny row-span it was last given, so its own getBoundingClientRect()
-// reports that constrained size, not its true content height. The media/
-// info children are plain block boxes (see .collection-card in
-// style.css) and always report their real rendered height regardless of
-// the parent's grid-imposed size.
-function applyMasonrySpan(card) {
-  let height = 0;
-  card.querySelectorAll(":scope > *").forEach((child) => {
-    height += child.getBoundingClientRect().height;
-  });
-  const span = Math.ceil((height + MASONRY_ROW_GAP) / (MASONRY_ROW_HEIGHT + MASONRY_ROW_GAP));
-  card.style.gridRowEnd = `span ${span}`;
-}
-
-function layoutMasonry(grid) {
-  grid.querySelectorAll(".collection-card").forEach(applyMasonrySpan);
-}
-
 // Crossfades through a product's stage images (main/detail/fabric/
 // construction/campaign) while hovered. With only one image — true for
 // every product today — this simply does nothing, since there's nothing
@@ -163,17 +141,7 @@ function renderCollection() {
 
   itemCount.textContent = t("shop.itemCount", { count: products.length });
 
-  grid.querySelectorAll(".collection-card").forEach((card) => {
-    setupHoverCycle(card);
-
-    const mainImage = card.querySelector(".stage-image, img");
-    if (mainImage && !mainImage.complete) {
-      mainImage.addEventListener("load", () => applyMasonrySpan(card), { once: true });
-    }
-  });
-
-  layoutMasonry(grid);
-  requestAnimationFrame(() => layoutMasonry(grid)); // catches images served from cache
+  grid.querySelectorAll(".collection-card").forEach(setupHoverCycle);
 }
 
 function sortProducts(order) {
@@ -303,7 +271,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderCollection();
   setupFloatingNav();
   onLangChange(renderCollection);
-
-  const grid = document.getElementById("productGrid");
-  window.addEventListener("resize", debounce(() => layoutMasonry(grid), 200));
 });
