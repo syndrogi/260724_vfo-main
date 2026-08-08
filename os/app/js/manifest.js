@@ -38,6 +38,14 @@ const FOUNDER_MODULES = [
     external: "https://supabase.com/dashboard/project/miqfpvtmmvuvaezexazw",
     icon: "supabase"
   },
+  {
+    id: "analytics",
+    label: "ANALYTICS",
+    sub: "애널리틱스",
+    external:
+      "https://analytics.google.com/analytics/web/provision/?hl=ko#/a403981634p549090957/reports/intelligenthome",
+    icon: "analytics"
+  },
   { id: "brain", label: "BRAIN", sub: "브레인", file: "modules/brain.html" },
   { id: "projects", label: "PROJECTS", sub: "프로젝트", file: "modules/projects.html" },
   { id: "money", label: "MONEY", sub: "재무", file: "modules/money.html" },

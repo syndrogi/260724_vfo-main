@@ -229,6 +229,13 @@
       '<rect x="0.75" y="0.75" width="22.5" height="22.5" rx="5" fill="#fff" stroke="#000" stroke-width="1.5"/>' +
       '<polygon points="13,4 5,13 13,13" fill="#3ecf8e"/>' +
       '<polygon points="11,20 19,11 11,11" fill="url(#sbGrad)"/>' +
+      "</svg>",
+    analytics:
+      '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+      '<rect x="0.75" y="0.75" width="22.5" height="22.5" rx="5" fill="#fff" stroke="#000" stroke-width="1.5"/>' +
+      '<rect x="5.5" y="13" width="3" height="6" rx="1" fill="#f9ab00"/>' +
+      '<rect x="10.5" y="9" width="3" height="10" rx="1" fill="#e37400"/>' +
+      '<rect x="15.5" y="5" width="3" height="14" rx="1" fill="#f9ab00"/>' +
       "</svg>"
   };
 
