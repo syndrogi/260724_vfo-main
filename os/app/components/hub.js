@@ -61,6 +61,15 @@
   const SUPABASE_ANON_KEY =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcWZwdnRtbXZ1dmFlemV4YXp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMTYwNTEsImV4cCI6MjEwMDc5MjA1MX0.JeN31q4ahSoqjFVAZS3Is1nMOc_mkiLB4nv3yxP2aY0";
 
+  let supabaseClient = null;
+  function getSupabaseClient() {
+    if (!window.supabase || !window.supabase.createClient) return null;
+    if (!supabaseClient) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    return supabaseClient;
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
@@ -99,12 +108,12 @@
     const listEl = root.querySelector("[data-contact-list]");
     if (!listEl) return;
 
-    if (!window.supabase || !window.supabase.createClient) {
+    const client = getSupabaseClient();
+    if (!client) {
       listEl.innerHTML = '<p class="app-message">Couldn’t reach Supabase.</p>';
       return;
     }
 
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     listEl.innerHTML = '<p class="app-message">Loading…</p>';
 
     client
@@ -160,9 +169,96 @@
     gridEl.innerHTML = cells;
   }
 
+  function renderJournalEntry(row) {
+    const date = row.created_at
+      ? new Date(row.created_at).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      : "";
+    const author = escapeHtml(row.author || "");
+    const content = escapeHtml(row.content || "");
+
+    return (
+      '<div class="journal-entry">' +
+        '<div class="journal-entry-meta">' + author + (date ? " · " + date : "") + "</div>" +
+        '<p class="journal-entry-text">' + content + "</p>" +
+      "</div>"
+    );
+  }
+
+  function loadJournalEntries(listEl) {
+    const client = getSupabaseClient();
+    if (!client) {
+      listEl.innerHTML = '<p class="app-message">Couldn’t reach Supabase.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '<p class="app-message">Loading…</p>';
+
+    client
+      .from("journal_entries")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(function (result) {
+        if (result.error) {
+          listEl.innerHTML = '<p class="app-message">Couldn’t load entries.</p>';
+          return;
+        }
+        const rows = result.data || [];
+        if (!rows.length) {
+          listEl.innerHTML = '<p class="app-message">No entries yet.</p>';
+          return;
+        }
+        listEl.innerHTML = rows.map(renderJournalEntry).join("");
+      });
+  }
+
+  function currentFounderName() {
+    const raw = sessionStorage.getItem("founderSession");
+    if (!raw) return "Founder";
+    try {
+      return JSON.parse(raw).name || "Founder";
+    } catch (err) {
+      return "Founder";
+    }
+  }
+
   function enhanceJournal(root) {
     const dateEl = root.querySelector("[data-journal-date]");
     if (dateEl) dateEl.textContent = new Date().toDateString();
+
+    const listEl = root.querySelector("[data-journal-list]");
+    const inputEl = root.querySelector("[data-journal-input]");
+    const saveButton = root.querySelector("[data-journal-save]");
+    if (!listEl) return;
+
+    loadJournalEntries(listEl);
+
+    if (!inputEl || !saveButton) return;
+
+    saveButton.addEventListener("click", function () {
+      const content = inputEl.value.trim();
+      if (!content) return;
+
+      const client = getSupabaseClient();
+      if (!client) return;
+
+      saveButton.disabled = true;
+
+      client
+        .from("journal_entries")
+        .insert({ author: currentFounderName(), content: content })
+        .then(function (result) {
+          saveButton.disabled = false;
+          if (result.error) return;
+          inputEl.value = "";
+          loadJournalEntries(listEl);
+        });
+    });
   }
 
   function showLoading() {

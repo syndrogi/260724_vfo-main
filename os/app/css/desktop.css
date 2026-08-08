@@ -411,9 +411,70 @@ body {
   margin-bottom: 16px;
 }
 
-.journal-line {
-  height: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+.journal-input {
+  width: 100%;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px;
+  resize: vertical;
+}
+
+.journal-input:focus {
+  outline: 1px solid #fff;
+  outline-offset: -1px;
+}
+
+.journal-save {
+  display: block;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.journal-save:hover {
+  border-color: #fff;
+}
+
+.journal-save:disabled {
+  color: #888;
+  cursor: default;
+}
+
+.journal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+  margin-top: 32px;
+}
+
+.journal-entry {
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  padding-left: 12px;
+}
+
+.journal-entry-meta {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.journal-entry-text {
+  font-size: 12px;
+  color: #fff;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .calendar {

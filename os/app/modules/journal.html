@@ -3,11 +3,15 @@
 <div class="app-content">
   <div class="journal-page">
     <div class="journal-date" data-journal-date></div>
-    <div class="journal-line"></div>
-    <div class="journal-line"></div>
-    <div class="journal-line"></div>
-    <div class="journal-line"></div>
-    <div class="journal-line"></div>
-    <div class="journal-line"></div>
+    <textarea
+      class="journal-input"
+      data-journal-input
+      rows="6"
+      placeholder="Write today's entry…"
+    ></textarea>
+    <button type="button" class="journal-save" data-journal-save>SAVE ENTRY</button>
+  </div>
+  <div class="journal-list" data-journal-list>
+    <p class="app-message">Loading…</p>
   </div>
 </div>
