@@ -1,3 +1,11 @@
+function debounce(fn, delay) {
+  let timer = null;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 const CART_STORAGE_KEY = "velfontCart";
 
 function loadCart() {
@@ -72,21 +80,21 @@ function renderCartDrawer() {
               </div>
               <div class="cart-item-info">
                 <div class="cart-item-name">${product.name}</div>
-                <div class="cart-item-size">사이즈: ${i.size}</div>
+                <div class="cart-item-size">${t("cart.size", { size: i.size })}</div>
                 <div class="cart-item-qty">
-                  <button type="button" class="qty-btn qty-minus" aria-label="수량 감소">-</button>
+                  <button type="button" class="qty-btn qty-minus" aria-label="${t("cart.qtyDecrease")}">-</button>
                   <span class="qty-value">${i.qty}</span>
-                  <button type="button" class="qty-btn qty-plus" aria-label="수량 증가">+</button>
+                  <button type="button" class="qty-btn qty-plus" aria-label="${t("cart.qtyIncrease")}">+</button>
                 </div>
                 <div class="cart-item-price">${formatPrice(product.price * i.qty)}</div>
               </div>
-              <button type="button" class="cart-item-remove" aria-label="삭제">
+              <button type="button" class="cart-item-remove" aria-label="${t("cart.remove")}">
                 <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
               </button>
             </div>`;
         })
         .join("")
-    : `<p class="cart-empty">장바구니가 비어 있습니다.</p>`;
+    : `<p class="cart-empty">${t("cart.empty")}</p>`;
 
   if (subtotalEl) subtotalEl.textContent = formatPrice(getCartSubtotal());
   if (cartCountEl) cartCountEl.textContent = getCartCount();
@@ -132,17 +140,65 @@ function setupNav() {
   });
 }
 
+// Live-filters the collection grid as the user types, on pages that have
+// one (index.html, via shop.js). On pages without a grid (e.g. a single
+// product page), Enter instead navigates to the collection with the query
+// so search always works from anywhere on the site.
 function setupSearch() {
   const searchToggle = document.getElementById("searchToggle");
   const searchBar = document.getElementById("searchBar");
-  if (!searchToggle || !searchBar) return;
+  const searchInput = document.getElementById("searchInput");
+  if (!searchToggle || !searchBar || !searchInput) return;
+
+  function openSearch() {
+    searchBar.classList.add("open");
+    searchInput.focus();
+  }
+
+  function closeSearch() {
+    searchBar.classList.remove("open");
+  }
 
   searchToggle.addEventListener("click", () => {
-    searchBar.classList.toggle("open");
     if (searchBar.classList.contains("open")) {
-      searchBar.querySelector("input").focus();
+      closeSearch();
+    } else {
+      openSearch();
     }
   });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeSearch();
+  });
+
+  searchInput.addEventListener(
+    "input",
+    debounce(() => {
+      if (typeof filterCollectionBySearch === "function") {
+        filterCollectionBySearch(searchInput.value);
+      }
+    }, 200)
+  );
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (typeof filterCollectionBySearch === "function") {
+      filterCollectionBySearch(searchInput.value);
+    } else {
+      const query = searchInput.value.trim();
+      window.location.href = query ? `index.html?search=${encodeURIComponent(query)}` : "index.html";
+    }
+  });
+
+  const presetQuery = new URLSearchParams(window.location.search).get("search");
+  if (presetQuery) {
+    searchInput.value = presetQuery;
+    openSearch();
+    if (typeof filterCollectionBySearch === "function") {
+      filterCollectionBySearch(presetQuery);
+    }
+  }
 }
 
 function setupCartDrawer() {
@@ -202,7 +258,7 @@ function setupNewsletter() {
     e.preventDefault();
     const input = form.querySelector("input");
     if (input.value) {
-      alert("구독해주셔서 감사합니다.");
+      alert(t("footer.newsletterThanks"));
       input.value = "";
     }
   });
@@ -285,4 +341,5 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", async () => {
   await productsReady;
   setupCartDrawer();
+  onLangChange(renderCartDrawer);
 });

@@ -6,6 +6,7 @@ const PRODUCTS_STORAGE_BUCKET = "products";
 
 let cachedProducts = [];
 let loadError = null;
+let cachedProductImages = new Map();
 
 async function loadProducts() {
   const { data, error } = await supabaseClient
@@ -25,10 +26,31 @@ async function loadProducts() {
   return cachedProducts;
 }
 
+async function loadProductImages() {
+  const { data, error } = await supabaseClient
+    .from("product_images")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("Failed to load product images from Supabase:", error.message);
+    cachedProductImages = new Map();
+    return cachedProductImages;
+  }
+
+  cachedProductImages = new Map();
+  (data ?? []).forEach((row) => {
+    const list = cachedProductImages.get(row.product_id) || [];
+    list.push(row);
+    cachedProductImages.set(row.product_id, list);
+  });
+  return cachedProductImages;
+}
+
 // Kicked off once, at parse time, so every page only ever pays for one
-// fetch. Callers that need product data await this before touching the
-// cache accessors below.
-const productsReady = loadProducts();
+// round of fetches. Callers that need product data await this before
+// touching the cache accessors below.
+const productsReady = Promise.all([loadProducts(), loadProductImages()]);
 
 function getProducts() {
   return cachedProducts;
@@ -36,6 +58,13 @@ function getProducts() {
 
 function getProductsLoadError() {
   return loadError;
+}
+
+// Ordered image rows (stage, sort_order) for one product, or [] if none
+// exist yet — every call site treats that as "nothing to cycle through,
+// just show the static thumbnail," so this never needs a special case.
+function getProductImages(productId) {
+  return cachedProductImages.get(productId) || [];
 }
 
 function getProductBySlug(slug) {
@@ -57,9 +86,9 @@ function filterProducts({ category, status, featured } = {}) {
   });
 }
 
-function resolveImageUrl(path) {
+function resolveImageUrl(path, bucket = PRODUCTS_STORAGE_BUCKET) {
   if (!path) return "";
-  return supabaseClient.storage.from(PRODUCTS_STORAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+  return supabaseClient.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 
 function formatPrice(value) {

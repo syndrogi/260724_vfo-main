@@ -5,14 +5,19 @@ function getProductFromUrl() {
 
 function renderProductDetail(product) {
   if (!product) {
-    document.getElementById("productDetail").innerHTML = `<p class="cart-empty">상품을 찾을 수 없습니다.</p>`;
+    document.getElementById("productDetail").innerHTML = `<p class="cart-empty">${t("product.notFound")}</p>`;
     return;
   }
 
   document.title = `VELFONT OFFICE — ${product.name}`;
   document.getElementById("breadcrumbName").textContent = product.name;
 
-  const images = product.thumbnail ? [resolveImageUrl(product.thumbnail)] : [];
+  const productImages = getProductImages(product.id);
+  const images = productImages.length
+    ? productImages.map((row) => resolveImageUrl(row.image))
+    : product.thumbnail
+    ? [resolveImageUrl(product.thumbnail)]
+    : [];
 
   const soldOut = product.status === "sold_out";
   const soldOutClass = soldOut ? " sold-out" : "";
@@ -34,15 +39,17 @@ function renderProductDetail(product) {
       </div>`
     : "";
 
-  const colorOptions = product.color
+  const colorOptions = (product.color || "")
     .split("/")
     .map((c) => c.trim())
+    .filter(Boolean)
     .map((c) => `<option value="${c}">${c}</option>`)
     .join("");
 
-  const sizeOptions = product.size
+  const sizeOptions = (product.size || "")
     .split(",")
     .map((s) => s.trim())
+    .filter(Boolean)
     .map(
       (size) => `
       <button type="button" class="size-option" data-size="${size}"${soldOut ? " disabled" : ""}>${size}</button>`
@@ -64,43 +71,43 @@ function renderProductDetail(product) {
 
     <div class="product-panel">
       <h1>${product.name}</h1>
-      <div class="product-colors">${product.color}</div>
+      <div class="product-colors">${product.color || ""}</div>
       <div class="product-price"><span>${formatPrice(product.price)}</span></div>
 
       ${descriptionHtml ? `<ul class="product-description">${descriptionHtml}</ul>` : ""}
 
       <div class="option-group">
-        <label for="colorSelect">색상</label>
+        <label for="colorSelect">${t("product.color")}</label>
         <select id="colorSelect">${colorOptions}</select>
       </div>
 
       <div class="option-group">
         <div class="option-group-head">
-          <label>사이즈</label>
-          <a href="#sizeGuide" class="size-guide-link">사이즈 가이드</a>
+          <label>${t("product.size")}</label>
+          <a href="#sizeGuide" class="size-guide-link">${t("product.sizeGuide")}</a>
         </div>
         <div class="size-options">${sizeOptions}</div>
       </div>
 
       ${
         soldOut
-          ? `<button class="add-to-cart-btn" disabled>품절된 상품입니다</button>`
-          : `<button class="add-to-cart-btn" id="addToCartBtn">장바구니 담기</button>`
+          ? `<button class="add-to-cart-btn" disabled>${t("product.soldOutButton")}</button>`
+          : `<button class="add-to-cart-btn" id="addToCartBtn">${t("product.addToCart")}</button>`
       }
 
       <div class="accordion">
         <details open>
-          <summary>구성/소재</summary>
+          <summary>${t("product.materialTitle")}</summary>
           <div class="accordion-body">
-            <p>Cotton 100%. 정확한 소재 정보는 상품 라벨을 참고해주세요.</p>
+            <p>${t("product.materialBody")}</p>
           </div>
         </details>
         <details id="sizeGuide">
-          <summary>사이즈 가이드</summary>
+          <summary>${t("product.sizeGuide")}</summary>
           <div class="accordion-body">
             <table class="size-guide-table">
               <thead>
-                <tr><th>사이즈</th><th>총장</th><th>가슴단면</th><th>어깨너비</th><th>소매길이</th></tr>
+                <tr><th>${t("product.sizeTableHeader")}</th><th>${t("product.lengthTableHeader")}</th><th>${t("product.chestTableHeader")}</th><th>${t("product.shoulderTableHeader")}</th><th>${t("product.sleeveTableHeader")}</th></tr>
               </thead>
               <tbody>
                 <tr><td>S</td><td>68</td><td>54</td><td>50</td><td>21</td></tr>
@@ -109,13 +116,13 @@ function renderProductDetail(product) {
                 <tr><td>XL</td><td>74</td><td>63</td><td>56</td><td>24</td></tr>
               </tbody>
             </table>
-            <p class="size-guide-note">단위: cm / 측정 방법에 따라 1~2cm 오차가 있을 수 있습니다.</p>
+            <p class="size-guide-note">${t("product.sizeGuideNote")}</p>
           </div>
         </details>
         <details>
-          <summary>케어 가이드</summary>
+          <summary>${t("product.careTitle")}</summary>
           <div class="accordion-body">
-            <p>찬물에 단독 손세탁을 권장하며, 표백제 사용을 피하고 그늘에서 건조해주세요.</p>
+            <p>${t("product.careBody")}</p>
           </div>
         </details>
       </div>
@@ -154,7 +161,7 @@ function setupAddToCart(product) {
   btn.addEventListener("click", (e) => {
     const selectedSize = document.querySelector(".size-option.active");
     if (!selectedSize) {
-      alert("사이즈를 선택해주세요.");
+      alert(t("product.selectSizeAlert"));
       return;
     }
     e.stopPropagation();
@@ -166,8 +173,14 @@ function setupAddToCart(product) {
 document.addEventListener("DOMContentLoaded", async () => {
   await productsReady;
   const product = getProductFromUrl();
-  renderProductDetail(product);
-  setupGallery();
-  setupSizeOptions();
-  if (product) setupAddToCart(product);
+
+  function render() {
+    renderProductDetail(product);
+    setupGallery();
+    setupSizeOptions();
+    if (product) setupAddToCart(product);
+  }
+
+  render();
+  onLangChange(render);
 });

@@ -92,6 +92,10 @@ svg {
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
+  /* The mark's thin blueprint linework reads lighter than the bold
+     header-text-btn type next to it at this size — a slight blur+
+     contrast pass thickens its edges to match without swapping assets. */
+  filter: blur(0.6px) contrast(2.6);
   transition: background-color 0.18s ease;
 }
 
@@ -162,6 +166,40 @@ svg {
 
 .cart-count {
   font-size: clamp(15px, 1.6vw, 19px);
+  font-weight: 700;
+}
+
+/* Language switch — the globe icon from the VELFONT OFFICE main site,
+   reusing the shop's own .dropdown styling (border/fade/translateY)
+   instead of introducing a second dropdown look. */
+.lang-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lang-toggle {
+  display: inline-flex;
+  color: #111;
+  transition: color 0.18s ease;
+}
+
+.lang-toggle svg {
+  width: 19px;
+  height: 19px;
+}
+
+.lang-toggle:hover,
+.lang-switch.open .lang-toggle {
+  color: var(--color-hover);
+}
+
+.lang-menu {
+  left: auto;
+  right: 0;
+}
+
+.lang-option.is-active {
   font-weight: 700;
 }
 
@@ -714,98 +752,99 @@ svg {
 
 /* ---------- Collection Head ---------- */
 .collection-head {
-  padding: 40px 24px 20px;
+  padding: 64px 56px 40px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 .collection-head h1 {
-  font-size: 34px;
+  font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.collection-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  row-gap: 12px;
-  margin-top: 16px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #111;
+.item-count {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: #666;
 }
 
-.sort-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sort-wrap select {
-  border: 1px solid #111;
-  background: #fff;
-  padding: 6px 10px;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ---------- Product Grid ---------- */
-.product-grid {
+/* ---------- Collection Feed ----------
+   An editorial masonry: cards keep their photo's natural aspect ratio
+   (no forced crop) and the grid gives each one a row-span computed from
+   its rendered height (js/shop.js's applyMasonrySpan/layoutMasonry) —
+   the standard vanilla-CSS-Grid masonry technique. Generous gaps and
+   page padding are the whitespace the redesign asked for; there's
+   deliberately no border/divider between cards. */
+.collection-feed {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 8px;
+  gap: 40px 32px;
+  padding: 0 56px 160px;
 }
 
-.product-card {
-  border-right: 1px solid #111;
-  border-bottom: 1px solid #111;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* Block, not flex: the card is a CSS Grid item whose own box gets
+   stretched to whatever tiny row-span js/shop.js gave it — a flex
+   column would then actively shrink its children to fit that box
+   before we ever get to measure their real size. Plain block layout
+   lets .collection-card-media/.collection-card-info keep their natural
+   content height regardless of the parent's grid-imposed height, which
+   is exactly what applyMasonrySpan() needs to read. */
+.collection-card {
+  display: block;
 }
 
-.product-card:nth-child(3n) {
-  border-right: none;
+.collection-card.span-2,
+.archive-block.span-2 {
+  grid-column: span 2;
 }
 
-.product-image {
+.collection-card-media {
   position: relative;
-  aspect-ratio: 3 / 4;
   overflow: hidden;
+  background: #f7f7f7;
 }
 
-.product-visual {
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(
-    135deg,
-    #eee,
-    #eee 2px,
-    #f7f7f7 2px,
-    #f7f7f7 14px
-  );
-}
-
-.product-visual img {
+/* Every product renders at least one .stage-image (its thumbnail).
+   Additional stage images (product_images rows: detail/fabric/
+   construction/campaign) layer on top and crossfade on hover — see
+   setupHoverCycle() in js/shop.js. The first keeps the box's natural
+   height; the rest sit absolutely over it so the crossfade never
+   shifts layout. */
+.stage-image {
   display: block;
   width: 100%;
+  height: auto;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.stage-image:first-child {
+  position: relative;
+}
+
+.stage-image:not(:first-child) {
+  position: absolute;
+  inset: 0;
   height: 100%;
   object-fit: cover;
 }
 
-.product-visual.sold-out {
-  opacity: 0.6;
-  filter: blur(6px);
+.stage-image.is-active {
+  opacity: 1;
 }
 
-.product-image .badge {
+.collection-card-media .badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
   background: #111;
   color: #fff;
   font-size: 10px;
@@ -814,46 +853,115 @@ svg {
   padding: 3px 8px;
 }
 
-.product-image .badge.sale {
-  background: #c0392b;
+.collection-card-info {
+  margin-top: 16px;
 }
 
-.product-info .name {
+.collection-card-name {
   font-size: 15px;
   font-weight: 500;
   line-height: 1.4;
 }
 
-.product-info .colors {
-  font-size: 12px;
-  color: #666;
+.collection-card-info .price {
   margin-top: 4px;
-}
-
-.product-info .price {
-  margin-top: 8px;
-  font-size: 16px;
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.price .original {
-  color: #999;
-  text-decoration: line-through;
-}
-
-.price .sale {
-  color: #c0392b;
-  font-weight: 700;
+  font-size: 15px;
 }
 
 .sold-out-label {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #999;
+}
+
+/* ---------- Archive Blocks ----------
+   Non-product editorial content interleaved into the feed (see
+   buildFeed() in js/shop.js). Renders nothing until rows exist in
+   Supabase's archive_blocks table — this is the visual treatment for
+   whenever that happens. */
+.archive-block {
+  display: block;
+}
+
+.archive-block-caption {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.archive-block-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #111;
+  margin-bottom: 4px;
+}
+
+/* ---------- Floating Nav ----------
+   The one deliberate exception to this site's square-cornered visual
+   language elsewhere — small rounded pills, fixed to the viewport, in
+   the spirit of a minimal high-end fashion site's floating controls.
+   Same All/Sort logic the header used to hold inline (js/shop.js's
+   setupFloatingNav/setupFloatingDropdown), just relocated. */
+.floating-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  gap: 12px;
+}
+
+.floating-nav-item {
+  position: relative;
+}
+
+.floating-nav-btn {
+  display: inline-block;
+  background: #fff;
+  border: 1px solid #111;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.floating-nav-btn:hover,
+.floating-nav-item.open .floating-nav-btn {
+  background: #111;
+  color: #fff;
+}
+
+.floating-dropdown {
+  top: auto;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 4px);
+  margin-bottom: 12px;
+  min-width: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.has-dropdown.open .floating-dropdown {
+  transform: translate(-50%, 0);
+}
+
+.floating-dropdown li a {
+  text-align: center;
+}
+
+.sort-option.is-active {
+  font-weight: 700;
+  background: #f5f5f5;
 }
 
 /* ---------- Breadcrumb ---------- */

@@ -23,7 +23,7 @@
 
 <header class="site-header">
   <div class="header-side header-left">
-    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+    <button class="nav-toggle" id="navToggle" data-i18n-aria-label="nav.menuOpen" aria-label="메뉴 열기">
       <span></span><span></span><span></span>
     </button>
 
@@ -38,31 +38,44 @@
             <li><a href="#">Accessories</a></li>
           </ul>
         </li>
-        <li><button type="button" class="header-text-btn" id="searchToggle" aria-label="검색">search</button></li>
+        <li><button type="button" class="header-text-btn" id="searchToggle" data-i18n-aria-label="nav.search" aria-label="검색">search</button></li>
       </ul>
     </nav>
   </div>
 
-  <a href="index.html" class="logo" aria-label="VELFONT OFFICE 홈으로 이동">
+  <a href="index.html" class="logo" data-i18n-aria-label="nav.logoHome" aria-label="VELFONT OFFICE 홈으로 이동">
     <span class="logo-mark" role="img" aria-label="VELFONT OFFICE"></span>
   </a>
 
   <div class="header-side header-right">
     <div class="header-icons">
-      <button class="header-text-btn" id="accountBtn" aria-label="로그인">login</button>
+      <div class="lang-switch has-dropdown" id="langSwitch">
+        <button type="button" class="lang-toggle" id="langToggle" aria-haspopup="true" aria-expanded="false" aria-controls="langMenu" data-i18n-aria-label="nav.langChange" aria-label="언어 변경">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </button>
+        <ul class="dropdown lang-menu" id="langMenu">
+          <li><a href="#" class="lang-option" data-lang="en">English</a></li>
+          <li><a href="#" class="lang-option" data-lang="ko">한국어</a></li>
+        </ul>
+      </div>
+      <button class="header-text-btn" id="accountBtn" data-i18n-aria-label="nav.login" aria-label="로그인">login</button>
       <div class="cart-nav-item" id="cartNavItem">
-        <button class="header-text-btn" id="cartBtn" aria-label="장바구니">f(<span class="cart-count" id="cartCount">0</span>)</button>
-        <div class="dropdown cart-drawer" id="cartDrawer" aria-label="장바구니">
+        <button class="header-text-btn" id="cartBtn" data-i18n-aria-label="nav.cart" aria-label="장바구니">f(<span class="cart-count" id="cartCount">0</span>)</button>
+        <div class="dropdown cart-drawer" id="cartDrawer" data-i18n-aria-label="nav.cart" aria-label="장바구니">
           <div class="cart-drawer-head">
-            <h3>장바구니</h3>
+            <h3 data-i18n="cart.title">장바구니</h3>
           </div>
           <div class="cart-drawer-items" id="cartDrawerItems"></div>
           <div class="cart-drawer-foot">
             <div class="cart-subtotal-row">
-              <span>소계</span>
+              <span data-i18n="cart.subtotal">소계</span>
               <span id="cartSubtotal">0원</span>
             </div>
-            <button class="checkout-btn" id="checkoutBtn">결제하기</button>
+            <button class="checkout-btn" id="checkoutBtn" data-i18n="cart.checkout">결제하기</button>
           </div>
         </div>
       </div>
@@ -70,13 +83,13 @@
   </div>
 
   <div class="search-bar" id="searchBar">
-    <input type="text" placeholder="검색어를 입력하세요">
+    <input type="text" id="searchInput" data-i18n-placeholder="nav.searchPlaceholder" placeholder="검색어를 입력하세요">
   </div>
 </header>
 
 <div class="modal-overlay" id="loginOverlay"></div>
 <div class="login-modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
-  <button type="button" class="modal-close" id="loginModalClose" aria-label="닫기">
+  <button type="button" class="modal-close" id="loginModalClose" data-i18n-aria-label="modal.close" aria-label="닫기">
     <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
   </button>
   <h2 id="loginModalTitle">Login</h2>
@@ -126,26 +139,26 @@
   <div class="footer-col">
     <h4>Help</h4>
     <ul>
-      <li><a href="#">배송 안내</a></li>
-      <li><a href="#">교환/반품</a></li>
-      <li><a href="#">사이즈 가이드</a></li>
-      <li><a href="#">문의하기</a></li>
+      <li><a href="#" data-i18n="footer.helpShipping">배송 안내</a></li>
+      <li><a href="#" data-i18n="footer.helpExchange">교환/반품</a></li>
+      <li><a href="#" data-i18n="footer.helpSizeGuide">사이즈 가이드</a></li>
+      <li><a href="#" data-i18n="footer.helpContact">문의하기</a></li>
     </ul>
   </div>
   <div class="footer-col">
     <h4>Company</h4>
     <ul>
-      <li><a href="#">브랜드 소개</a></li>
-      <li><a href="#">스토어 안내</a></li>
-      <li><a href="#">채용</a></li>
+      <li><a href="#" data-i18n="footer.companyAbout">브랜드 소개</a></li>
+      <li><a href="#" data-i18n="footer.companyStore">스토어 안내</a></li>
+      <li><a href="#" data-i18n="footer.companyCareers">채용</a></li>
     </ul>
   </div>
   <div class="footer-col newsletter">
     <h4>Newsletter</h4>
-    <p>신상품 소식을 가장 먼저 받아보세요.</p>
+    <p data-i18n="footer.newsletterText">신상품 소식을 가장 먼저 받아보세요.</p>
     <form id="newsletterForm">
-      <input type="email" placeholder="이메일 주소" required>
-      <button type="submit">구독</button>
+      <input type="email" data-i18n-placeholder="footer.newsletterPlaceholder" placeholder="이메일 주소" required>
+      <button type="submit" data-i18n="footer.newsletterSubmit">구독</button>
     </form>
     <div class="social-links">
       <a href="#">Instagram</a>
@@ -161,6 +174,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/products.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/common.js"></script>
 <script src="js/product-detail.js"></script>
 </body>

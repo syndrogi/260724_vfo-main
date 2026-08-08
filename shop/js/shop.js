@@ -1,48 +1,179 @@
+const ARCHIVE_STORAGE_BUCKET = "archive";
+const MASONRY_ROW_HEIGHT = 8; // px — must match .collection-feed's grid-auto-rows
+const MASONRY_ROW_GAP = 40; // px — must match .collection-feed's row gap
+const HOVER_CYCLE_MS = 900;
+const ARCHIVE_BLOCK_INTERVAL = 5; // an archive block after every 5th product, while blocks last
+
 function badgeFor(product) {
   if (product.status === "sold_out") return '<span class="badge">Sold Out</span>';
   if (product.status === "coming_soon") return '<span class="badge">Coming Soon</span>';
   return "";
 }
 
-function renderProducts() {
+// Interleaves archive blocks into the product sequence every ARCHIVE_BLOCK_INTERVAL
+// slot. With zero archive blocks (the default today) this is just the product list.
+function buildFeed(products, archiveBlocks) {
+  if (!archiveBlocks.length) {
+    return products.map((product) => ({ kind: "product", product }));
+  }
+
+  const feed = [];
+  let archiveIndex = 0;
+
+  products.forEach((product, i) => {
+    feed.push({ kind: "product", product });
+    const atInterval = (i + 1) % ARCHIVE_BLOCK_INTERVAL === 0;
+    if (atInterval && archiveIndex < archiveBlocks.length) {
+      feed.push({ kind: "archive", block: archiveBlocks[archiveIndex] });
+      archiveIndex++;
+    }
+  });
+
+  while (archiveIndex < archiveBlocks.length) {
+    feed.push({ kind: "archive", block: archiveBlocks[archiveIndex] });
+    archiveIndex++;
+  }
+
+  return feed;
+}
+
+function productCardHtml(product) {
+  const soldOut = product.status === "sold_out";
+  const images = getProductImages(product.id);
+  const stageUrls = images.length ? images.map((row) => resolveImageUrl(row.image)) : [product.thumbnail ? resolveImageUrl(product.thumbnail) : ""];
+
+  const stageImagesHtml = stageUrls
+    .filter(Boolean)
+    .map((src, i) => `<img class="stage-image${i === 0 ? " is-active" : ""}" src="${src}" alt="${product.name}" loading="lazy">`)
+    .join("");
+
+  return `
+    <a class="collection-card" href="product.html?slug=${product.slug}" data-product-id="${product.id}">
+      <div class="collection-card-media">
+        ${stageImagesHtml}
+        ${badgeFor(product)}
+      </div>
+      <div class="collection-card-info">
+        <div class="collection-card-name">${product.name}</div>
+        ${soldOut ? `<div class="sold-out-label">${t("product.soldOutLabel")}</div>` : `<div class="price"><span>${formatPrice(product.price)}</span></div>`}
+      </div>
+    </a>
+  `;
+}
+
+function archiveBlockHtml(block) {
+  const img = block.image
+    ? `<img src="${resolveImageUrl(block.image, ARCHIVE_STORAGE_BUCKET)}" alt="${block.title || ""}" loading="lazy">`
+    : "";
+  const caption =
+    block.title || block.caption
+      ? `<div class="archive-block-caption">
+          ${block.title ? `<div class="archive-block-title">${block.title}</div>` : ""}
+          ${block.caption ? `<p>${block.caption}</p>` : ""}
+        </div>`
+      : "";
+
+  return `
+    <div class="collection-card archive-block${block.span === 2 ? " span-2" : ""}">
+      <div class="collection-card-media">${img}</div>
+      ${caption}
+    </div>
+  `;
+}
+
+// Measures the card's own content children rather than the card element
+// itself: the card is a grid item that CSS Grid stretches to whatever
+// tiny row-span it was last given, so its own getBoundingClientRect()
+// reports that constrained size, not its true content height. The media/
+// info children are plain block boxes (see .collection-card in
+// style.css) and always report their real rendered height regardless of
+// the parent's grid-imposed size.
+function applyMasonrySpan(card) {
+  let height = 0;
+  card.querySelectorAll(":scope > *").forEach((child) => {
+    height += child.getBoundingClientRect().height;
+  });
+  const span = Math.ceil((height + MASONRY_ROW_GAP) / (MASONRY_ROW_HEIGHT + MASONRY_ROW_GAP));
+  card.style.gridRowEnd = `span ${span}`;
+}
+
+function layoutMasonry(grid) {
+  grid.querySelectorAll(".collection-card").forEach(applyMasonrySpan);
+}
+
+// Crossfades through a product's stage images (main/detail/fabric/
+// construction/campaign) while hovered. With only one image — true for
+// every product today — this simply does nothing, since there's nothing
+// to cycle to.
+function setupHoverCycle(card) {
+  const stageImages = card.querySelectorAll(".stage-image");
+  if (stageImages.length < 2) return;
+
+  let index = 0;
+  let intervalId = null;
+
+  function show(next) {
+    stageImages[index].classList.remove("is-active");
+    index = next;
+    stageImages[index].classList.add("is-active");
+  }
+
+  card.addEventListener("pointerenter", () => {
+    intervalId = setInterval(() => show((index + 1) % stageImages.length), HOVER_CYCLE_MS);
+  });
+
+  card.addEventListener("pointerleave", () => {
+    clearInterval(intervalId);
+    show(0);
+  });
+}
+
+// Set by filterCollectionBySearch(); empty means no active search.
+let currentSearchQuery = "";
+
+function matchesSearch(product, query) {
+  return product.name.toLowerCase().includes(query) || (product.category || "").toLowerCase().includes(query);
+}
+
+function renderCollection() {
   const grid = document.getElementById("productGrid");
   const itemCount = document.getElementById("itemCount");
-  const products = getProducts();
 
   if (getProductsLoadError()) {
-    grid.innerHTML = `<p class="cart-empty">상품을 불러오지 못했습니다.</p>`;
+    grid.innerHTML = `<p class="cart-empty">${t("shop.loadError")}</p>`;
     itemCount.textContent = "";
     return;
   }
 
+  const query = currentSearchQuery.trim().toLowerCase();
+  const products = query ? getProducts().filter((p) => matchesSearch(p, query)) : getProducts();
+
   if (!products.length) {
-    grid.innerHTML = `<p class="cart-empty">등록된 상품이 없습니다.</p>`;
-    itemCount.textContent = "전체 0개 상품";
+    grid.innerHTML = `<p class="cart-empty">${query ? t("shop.noResults", { query: currentSearchQuery.trim() }) : t("shop.empty")}</p>`;
+    itemCount.textContent = t("shop.itemCount", { count: 0 });
     return;
   }
 
-  grid.innerHTML = products
-    .map((p) => {
-      const soldOut = p.status === "sold_out";
-      const img = p.thumbnail ? `<img src="${resolveImageUrl(p.thumbnail)}" alt="${p.name}">` : "";
+  // Archive blocks are editorial, not products — leave them out of search results.
+  const feed = query ? products.map((product) => ({ kind: "product", product })) : buildFeed(products, getArchiveBlocks());
 
-      return `
-        <a class="product-card" href="product.html?slug=${p.slug}">
-          <div class="product-image">
-            <div class="product-visual${soldOut ? " sold-out" : ""}">${img}</div>
-            ${badgeFor(p)}
-          </div>
-          <div class="product-info">
-            <div class="name">${p.name}</div>
-            <div class="colors">${p.color}</div>
-            ${soldOut ? '<div class="sold-out-label">품절</div>' : `<div class="price"><span>${formatPrice(p.price)}</span></div>`}
-          </div>
-        </a>
-      `;
-    })
+  grid.innerHTML = feed
+    .map((entry) => (entry.kind === "product" ? productCardHtml(entry.product) : archiveBlockHtml(entry.block)))
     .join("");
 
-  itemCount.textContent = `전체 ${products.length}개 상품`;
+  itemCount.textContent = t("shop.itemCount", { count: products.length });
+
+  grid.querySelectorAll(".collection-card").forEach((card) => {
+    setupHoverCycle(card);
+
+    const mainImage = card.querySelector(".stage-image, img");
+    if (mainImage && !mainImage.complete) {
+      mainImage.addEventListener("load", () => applyMasonrySpan(card), { once: true });
+    }
+  });
+
+  layoutMasonry(grid);
+  requestAnimationFrame(() => layoutMasonry(grid)); // catches images served from cache
 }
 
 function sortProducts(order) {
@@ -56,12 +187,59 @@ function sortProducts(order) {
     products.reverse();
   }
 
-  renderProducts();
+  renderCollection();
 }
 
-function setupSort() {
-  const sortSelect = document.getElementById("sortSelect");
-  sortSelect.addEventListener("change", (e) => sortProducts(e.target.value));
+// Called by common.js's search box (live as the user types, and once on
+// load if the page was reached via a ?search= link from another page).
+function filterCollectionBySearch(query) {
+  currentSearchQuery = query;
+  renderCollection();
+}
+
+// Small rounded floating pills (All / Sort) — the one deliberate exception
+// to this site's otherwise square-cornered visual language. Each opens the
+// same dropdown content/logic the header used to hold inline.
+function setupFloatingDropdown(itemId, toggleId) {
+  const item = document.getElementById(itemId);
+  const toggle = document.getElementById(toggleId);
+  if (!item || !toggle) return null;
+
+  function close() {
+    item.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+  }
+
+  toggle.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = item.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!item.contains(e.target)) close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+
+  return { close };
+}
+
+function setupFloatingNav() {
+  setupFloatingDropdown("floatingAllItem", "floatingAllToggle");
+  const sortHandle = setupFloatingDropdown("floatingSortItem", "floatingSortToggle");
+
+  document.querySelectorAll(".sort-option").forEach((option) => {
+    option.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".sort-option").forEach((o) => o.classList.remove("is-active"));
+      option.classList.add("is-active");
+      sortProducts(option.dataset.sort);
+      sortHandle?.close();
+    });
+  });
 }
 
 /**
@@ -103,12 +281,12 @@ function setupPromoBannerIdle() {
 
   function idleTick(timestamp) {
     if (idleStart === null) idleStart = timestamp;
-    const t = (timestamp - idleStart) / 1000;
+    const elapsed = (timestamp - idleStart) / 1000;
     const bounds = computeBounds();
     const ampX = Math.min(bounds.maxX, -bounds.minX) * IDLE_AMOUNT;
     const ampY = Math.min(bounds.maxY, -bounds.minY) * IDLE_AMOUNT;
-    img.style.transform = `translate(${Math.sin((t * 2 * Math.PI) / 9) * ampX}px, ${
-      Math.sin((t * 2 * Math.PI) / 7) * ampY
+    img.style.transform = `translate(${Math.sin((elapsed * 2 * Math.PI) / 9) * ampX}px, ${
+      Math.sin((elapsed * 2 * Math.PI) / 7) * ampY
     }px)`;
     requestAnimationFrame(idleTick);
   }
@@ -121,7 +299,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await productsReady;
-  renderProducts();
-  setupSort();
+  await Promise.all([productsReady, archiveBlocksReady]);
+  renderCollection();
+  setupFloatingNav();
+  onLangChange(renderCollection);
+
+  const grid = document.getElementById("productGrid");
+  window.addEventListener("resize", debounce(() => layoutMasonry(grid), 200));
 });

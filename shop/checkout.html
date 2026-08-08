@@ -23,7 +23,7 @@
 
 <header class="site-header">
   <div class="header-side header-left">
-    <button class="nav-toggle" id="navToggle" aria-label="메뉴 열기">
+    <button class="nav-toggle" id="navToggle" data-i18n-aria-label="nav.menuOpen" aria-label="메뉴 열기">
       <span></span><span></span><span></span>
     </button>
     <nav class="main-nav" id="mainNav">
@@ -33,7 +33,7 @@
     </nav>
   </div>
 
-  <a href="index.html" class="logo" aria-label="VELFONT OFFICE 홈으로 이동">
+  <a href="index.html" class="logo" data-i18n-aria-label="nav.logoHome" aria-label="VELFONT OFFICE 홈으로 이동">
     <span class="logo-mark" role="img" aria-label="VELFONT OFFICE"></span>
   </a>
 
@@ -46,32 +46,32 @@
 
 <main class="checkout-page">
   <section class="checkout-summary">
-    <h1>주문 요약</h1>
+    <h1 data-i18n="checkout.title">주문 요약</h1>
     <div class="checkout-items" id="checkoutItems"></div>
     <div class="checkout-total-row">
-      <span>총 결제 금액</span>
+      <span data-i18n="checkout.totalLabel">총 결제 금액</span>
       <span id="checkoutTotal">0원</span>
     </div>
   </section>
 
   <section class="checkout-payment">
-    <h2>결제 정보</h2>
-    <p class="checkout-note">결제 연동은 준비 중입니다. 아래 버튼은 이후 실제 PG(결제) 연동이 붙을 자리입니다.</p>
+    <h2 data-i18n="checkout.paymentInfo">결제 정보</h2>
+    <p class="checkout-note" data-i18n="checkout.note">결제 연동은 준비 중입니다. 아래 버튼은 이후 실제 PG(결제) 연동이 붙을 자리입니다.</p>
 
     <div class="checkout-field">
-      <label for="recipientName">받는 사람</label>
-      <input type="text" id="recipientName" placeholder="이름">
+      <label for="recipientName" data-i18n="checkout.recipientLabel">받는 사람</label>
+      <input type="text" id="recipientName" data-i18n-placeholder="checkout.recipientPlaceholder" placeholder="이름">
     </div>
     <div class="checkout-field">
-      <label for="recipientAddress">배송지</label>
-      <input type="text" id="recipientAddress" placeholder="주소">
+      <label for="recipientAddress" data-i18n="checkout.addressLabel">배송지</label>
+      <input type="text" id="recipientAddress" data-i18n-placeholder="checkout.addressPlaceholder" placeholder="주소">
     </div>
     <div class="checkout-field">
-      <label for="recipientPhone">연락처</label>
-      <input type="text" id="recipientPhone" placeholder="휴대폰 번호">
+      <label for="recipientPhone" data-i18n="checkout.phoneLabel">연락처</label>
+      <input type="text" id="recipientPhone" data-i18n-placeholder="checkout.phonePlaceholder" placeholder="휴대폰 번호">
     </div>
 
-    <button class="checkout-submit-btn" id="checkoutSubmitBtn">결제하기</button>
+    <button class="checkout-submit-btn" id="checkoutSubmitBtn" data-i18n="checkout.submit">결제하기</button>
   </section>
 </main>
 
@@ -84,6 +84,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/products.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/common.js"></script>
 <script src="js/checkout.js"></script>
 </body>
